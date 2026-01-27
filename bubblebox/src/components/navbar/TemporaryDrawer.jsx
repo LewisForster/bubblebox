@@ -1,3 +1,4 @@
+import "./sidebar.css";
 import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -19,11 +20,18 @@ import ListItemText from '@mui/material/ListItemText';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
 import MailIcon from '@mui/icons-material/Mail';
 import SettingsIcon from '@mui/icons-material/Settings';
+import Modal from 'react-bootstrap/Modal';
+import Tab from 'react-bootstrap/Tab';
+import Nav from 'react-bootstrap/Nav';
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
+
 
 
 //https://mui.com/material-ui/react-drawer/
 
 const drawerWidth = 240;
+
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme }) => ({
@@ -83,6 +91,11 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 export default function PersistentDrawerLeft() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+
+  const [modalShow, setModalShow] = React.useState(false);
+
+  const handleModalClose = () => setModalShow(false);
+  const handleModalShow = () => setModalShow(true);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -159,7 +172,7 @@ export default function PersistentDrawerLeft() {
         </List>
         <List style={{ position: "absolute", bottom: "0" }}> 
             <ListItem disablePadding>
-              <ListItemButton>
+              <ListItemButton onClick={handleModalShow}>
                 <ListItemIcon>
                   <SettingsIcon/>
                 </ListItemIcon>
@@ -171,6 +184,33 @@ export default function PersistentDrawerLeft() {
       <Main open={open}>
         <DrawerHeader />
       </Main>
+      <Modal dialogClassName="settingsDialog" className="settingsModal" size="lg" show={modalShow} onHide={handleModalClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Settings</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Tab.Container id="left-tabs-example" defaultActiveKey="first">
+      <Row>
+        <Col sm={3}>
+          <Nav variant="pills" className="flex-column">
+            <Nav.Item>
+              <Nav.Link eventKey="first">Tab 1</Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="second">Tab 2</Nav.Link>
+            </Nav.Item>
+          </Nav>
+        </Col>
+        <Col sm={9}>
+          <Tab.Content>
+            <Tab.Pane eventKey="first"><Nav.Link onClick={handleLogout}>Logout</Nav.Link></Tab.Pane>
+            <Tab.Pane eventKey="second">Second tab content</Tab.Pane>
+          </Tab.Content>
+        </Col>
+      </Row>
+    </Tab.Container>
+        </Modal.Body>
+      </Modal>
     </Box>
   );
 }

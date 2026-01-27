@@ -52,7 +52,7 @@ function LoginPage({ showNameField = false }) {
         case 201:
           setError(res.data);
           await sleep(1500);
-          navigate("/home");
+          navigate("/login");
 
           break;
 

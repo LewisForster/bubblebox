@@ -1,0 +1,12 @@
+.modal.settingsModal {
+    z-index: 1500;
+}
+
+.modal-dialog.settingsDialog {
+    max-width: 50%;
+    max-height: 50%;
+}
+
+.modal-backdrop {
+    z-index: 1499 !important;
+}
