@@ -17,12 +17,7 @@ function NavbarComponent() {
 
   const navigate = useNavigate();  
   
-  const handleLogout = async() =>{
-      await axios.post("http://localhost:4000/auth/logout")
-      await sleep(1000);
-      navigate("/home")
-  }
-
+  
   const [authenticated, setAuthenticated] = useState(null)
   useEffect(()=>{
   
@@ -83,11 +78,6 @@ function NavbarComponent() {
               About Us
             </Nav.Link>
           </Nav>
-          {authenticated && (
-            <Nav>
-              <Nav.Link onClick={handleLogout}>Logout</Nav.Link>
-            </Nav>
-          )}
           {!authenticated &&(
           <Nav>
             <Nav.Link href="/login">Login</Nav.Link>

@@ -4,9 +4,8 @@ import "./loginComponent.css";
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import sleep from "../misc/sleep.jsx"
+import sleep from "../misc/sleep.jsx";
 axios.defaults.withCredentials = true;
-
 
 function LoginPage({ showNameField = false }) {
   const [values, setValues] = useState({
@@ -20,34 +19,31 @@ function LoginPage({ showNameField = false }) {
 
   const handleChange = (e) => {
     if (error) {
-        setError("");
+      setError("");
     }
-    const { name, value } = e.target; // stores field name and input 
+    const { name, value } = e.target; // stores field name and input
     setValues({ ...values, [name]: value }); // changes data - create copy of values, select and set field to that value
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // prevents firing of submit
 
-    try{
+    try {
       let url;
-      if (showNameField){
+      if (showNameField) {
         url = "http://localhost:4000/auth/register"; // if we're showing the name field - i.e: if register page
-      }else{
-        url ="http://localhost:4000/auth/login"; // login doesn't use name
+      } else {
+        url = "http://localhost:4000/auth/login"; // login doesn't use name
       }
-      
-      const res = await axios.post(url,
-      values);
 
-      
-      switch(res.status){
+      const res = await axios.post(url, values);
+
+      switch (res.status) {
         case 200:
           setError(res.data);
           await sleep(1500);
-          navigate("/home");
+          navigate("/dashboard");
           break;
-
 
         case 201:
           setError(res.data);
@@ -56,21 +52,19 @@ function LoginPage({ showNameField = false }) {
 
           break;
 
-         default:
+        default:
           setError("Unexpected error occured!"); // default as it's proper practice
       }
+    } catch (err) {
+      console.log("Error sending data:", err); // default error
 
-     } catch (err){
-    console.log("Error sending data:",err); // default error
-
-
-
-    if(err.response){
+      if (err.response) {
         setError(err.response.data); //axios will only read err.response.data for message - passed from authroutes
-        console.log(err.response.data) //debug - in case else doesnt catch
-      }else{
+        console.log(err.response.data); //debug - in case else doesnt catch
+      } else {
         setError("An unexpected error occured"); //if an unhandled error occurs or haven't sent response
-      }}
+      }
+    }
   };
 
   return (
@@ -85,7 +79,7 @@ function LoginPage({ showNameField = false }) {
             name="username"
             value={values.username} // holds current value of name field
             onChange={handleChange}
-          ></Form.Control>
+          />
         </Form.Group>
       )}
 

@@ -1,4 +1,4 @@
-import "./sidebar.css";
+import "../navbar/navbar.css";
 import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -7,6 +7,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import MuiAppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
+import AddCircleItem from '@mui/icons-material/AddCircle';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
@@ -25,6 +26,10 @@ import Tab from 'react-bootstrap/Tab';
 import Nav from 'react-bootstrap/Nav';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
+import { useNavigate } from "react-router-dom";
+import sleep from "../misc/sleep.jsx";
+import axios from "axios";
+
 
 
 
@@ -88,10 +93,40 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-export default function PersistentDrawerLeft() {
+export default function PersistentDrawerLeft({isOpen, onOpenChange}) {
+  const navigate = useNavigate();  
+    
+    const handleLogout = async() =>{
+        await axios.post("http://localhost:4000/auth/logout")
+        await sleep(1000);
+        navigate("/home")
+    }
+
+
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
 
+  
+
+  const [listNames, setListNames] = React.useState([]);
+  React.useEffect(()=>{
+    const getListNames = async() => {
+      try{
+        const {data} = await axios.get("http://localhost:4000/auth/tasknames", { credentials: "include" })
+        setListNames(data);
+        console.log(data);
+
+      }catch (err) {
+      console.log(err)
+    }}
+  getListNames()}, []) //https://devtrium.com/posts/dependency-arrays
+
+  // only need this fetch on page load - using dependency array
+
+
+
+
+  
   const [modalShow, setModalShow] = React.useState(false);
 
   const handleModalClose = () => setModalShow(false);
@@ -104,6 +139,10 @@ export default function PersistentDrawerLeft() {
   const handleDrawerClose = () => {
     setOpen(false);
   };
+
+
+
+  
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -139,6 +178,8 @@ export default function PersistentDrawerLeft() {
         anchor="left"
         open={open}
       >
+
+
         <DrawerHeader>
           <IconButton onClick={handleDrawerClose}>
             {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
@@ -146,18 +187,33 @@ export default function PersistentDrawerLeft() {
         </DrawerHeader>
         <Divider />
         <List>
-          {['Inbox', 'Starred', 'Send email', 'Drafts'].map((text, index) => (
-            <ListItem key={text} disablePadding>
+          <ListItem disablePadding>
+            <ListItemButton onClick={()=> onOpenChange(!isOpen)}>
+              <ListItemIcon>
+                <AddCircleItem/>
+              </ListItemIcon>
+              <ListItemText primary={"New Task"}/>
+            </ListItemButton>
+          </ListItem>
+        </List>
+        <List>
+          {listNames.map((item) => (
+            <ListItem key={item.list_id} disablePadding>
               <ListItemButton>
                 <ListItemIcon>
-                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                  {item.list_id % 2 === 0 ? <InboxIcon /> : <MailIcon />}
                 </ListItemIcon>
-                <ListItemText primary={text} />
+                <ListItemText primary={item.list_name} />
               </ListItemButton>
-            </ListItem>
+            </ListItem> 
           ))}
         </List>
+
+
+
         <Divider />
+
+
         <List>
           {['All mail', 'Trash', 'Spam'].map((text, index) => (
             <ListItem key={text} disablePadding>
@@ -181,8 +237,15 @@ export default function PersistentDrawerLeft() {
             </ListItem>
         </List>
       </Drawer>
+
+
+
       <Main open={open}>
         <DrawerHeader />
+
+
+
+
       </Main>
       <Modal dialogClassName="settingsDialog" className="settingsModal" size="lg" show={modalShow} onHide={handleModalClose}>
         <Modal.Header closeButton>

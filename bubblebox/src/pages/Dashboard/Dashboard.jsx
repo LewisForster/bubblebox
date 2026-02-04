@@ -1,21 +1,16 @@
-import TemporaryDrawer from "@/components/navbar/TemporaryDrawer"
+import PersistentDrawer from "@/components/dashboardComponents/PersistentDrawer"
 import "../../components/loginComponents/loginComponent.css";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import sleep from "../../components/misc/sleep.jsx";
+import TemporaryDrawer from "@/components/dashboardComponents/TemporaryDrawer"
+
 
 
 function Dashboard() {
-  const navigate = useNavigate();  
-  
-  const handleLogout = async() =>{
-      await axios.post("http://localhost:4000/auth/logout")
-      await sleep(1000);
-      navigate("/home")
-  }
-
   const [authenticated, setAuthenticated] = useState(null)
+
+  const [isOpen, setOpen] = useState(false);
+  console.log("hi", isOpen);
   useEffect(()=>{
   
 
@@ -29,13 +24,16 @@ function Dashboard() {
       setAuthenticated(false);
     });
   
-  });
+  },[]); 
+  // only need auth check on page load - using dependency array[])
 
   console.log(authenticated)
   return (
     <div className="Home">
-      <TemporaryDrawer></TemporaryDrawer>
-    </div>
+      <PersistentDrawer isOpen={isOpen} onOpenChange={setOpen} />
+      <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen}/> {/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
+
+    </div> //https://stackoverflow.com/a/60454055
   );
 }
 export default Dashboard;

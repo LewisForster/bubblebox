@@ -3,7 +3,10 @@ import cors from 'cors';
 import session from "express-session";
 import passport from "passport";
 import "../strategies/local.js";
-import authRoute from "./routes/authRoutes.js"
+import authRoute from "./routes/authRoutes.js";
+import taskRoute from "./routes/taskRoutes.js";
+
+
 
 
 
@@ -33,6 +36,8 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/auth", authRoute);
+app.use("/tasks", taskRoute);
+
 
 
 const PORT = process.env.DB_SERVER_PORT
