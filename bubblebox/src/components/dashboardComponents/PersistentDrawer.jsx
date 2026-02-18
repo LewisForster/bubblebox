@@ -112,7 +112,7 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange}) {
   React.useEffect(()=>{
     const getListNames = async() => {
       try{
-        const {data} = await axios.get("http://localhost:4000/auth/tasknames", { credentials: "include" })
+        const {data} = await axios.get("http://localhost:4000/auth/boxnames", { credentials: "include" })
         setListNames(data);
         console.log(data);
 

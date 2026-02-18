@@ -47,4 +47,22 @@ router.post("/saveTask", (req, res) => {
 }
 )
 
+router.get("/taskInfo", (req, res) => {
+    const { list_id } = req.query;
+    const query = 'SELECT task_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due FROM tasks WHERE list_id = ?';
+    db_con.query(query, [list_id], (err, result) => {
+        if (err) {
+            console.log("DIDNT FETCH TASK INFO")
+            console.log(err)
+            return res.status(500).send("ERROR RETRIEVING TASK")
+
+        } else {
+            console.log("SENDING TASK INFO")
+            console.log(result)
+            console.log(list_id)
+            return res.status(200).json(result)
+        }
+    })
+})
+
 export default router;

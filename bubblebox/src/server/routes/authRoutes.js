@@ -72,7 +72,7 @@ router.get("/auth", (req, res) => {
     res.json({ authenticated: Boolean(req.user) });
 });
 
-router.get("/tasknames", (req, res) => {
+router.get("/boxnames", (req, res) => {
     if (req.user) {
         const query = 'SELECT list_id, list_name FROM tasklist WHERE user_id = ?';
         db_con.query(query, [req.user.id], (err, result) => {

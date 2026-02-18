@@ -106,11 +106,13 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
     const getSelectOptions = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/auth/tasknames",
+          "http://localhost:4000/auth/boxnames",
           { credentials: "include" },
-        ); // getting list names to display in box
+        );
+        const {test} = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: 1}}) // getting list names to display in box
         setSelectOptions(data);
         console.log(data);
+        console.log(test)
       } catch (err) {
         console.log(err);
       }

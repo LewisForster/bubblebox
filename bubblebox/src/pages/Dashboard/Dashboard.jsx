@@ -3,6 +3,7 @@ import "../../components/loginComponents/loginComponent.css";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import TemporaryDrawer from "@/components/dashboardComponents/TemporaryDrawer"
+import BoxCanvas from "@/components/dashboardComponents/boxCanvas"
 
 
 
@@ -32,7 +33,7 @@ function Dashboard() {
     <div className="Home">
       <PersistentDrawer isOpen={isOpen} onOpenChange={setOpen} />
       <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen}/> {/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
-
+    <BoxCanvas></BoxCanvas>
     </div> //https://stackoverflow.com/a/60454055
   );
 }
