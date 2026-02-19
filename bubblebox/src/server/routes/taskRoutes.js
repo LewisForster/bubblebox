@@ -58,8 +58,8 @@ router.get("/taskInfo", (req, res) => {
 
         } else {
             console.log("SENDING TASK INFO")
+            console.log("list ID:", list_id)
             console.log(result)
-            console.log(list_id)
             return res.status(200).json(result)
         }
     })

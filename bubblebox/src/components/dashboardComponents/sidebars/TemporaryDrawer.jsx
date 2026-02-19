@@ -1,5 +1,5 @@
 import * as React from "react";
-import "./temporaryDrawer.css";
+import "./sidebarCSS/temporaryDrawer.css";
 import "react-datepicker/dist/react-datepicker.css";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -12,16 +12,16 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
-import "../navbar/navbar.css";
+import "@/components/navbar/navbar.css";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import colourGen from "../misc/colourGen.jsx";
+import colourGen from "../../misc/colourGen.jsx";
 import { registerLocale, setDefaultLocale, DatePicker } from "react-datepicker";
 import { es } from "date-fns/locale/es";
 import { render } from "ejs";
 
-export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
+export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}) {
   const navigate = useNavigate();
   const [state, setState] = React.useState({
     top: false,
@@ -102,23 +102,21 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
 
   const [selectOptions, setSelectOptions] = React.useState([]);
 
-  React.useEffect(() => {
-    const getSelectOptions = async () => {
-      try {
-        const { data } = await axios.get(
-          "http://localhost:4000/auth/boxnames",
-          { credentials: "include" },
-        );
-        const {test} = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: 1}}) // getting list names to display in box
-        setSelectOptions(data);
-        console.log(data);
-        console.log(test)
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    getSelectOptions();
-  }, []);
+  // React.useEffect(() => {
+  //   const getSelectOptions = async () => {
+  //     try {
+  //       const { data } = await axios.get(
+  //         "http://localhost:4000/auth/boxnames",
+  //         { credentials: "include" },
+  //       ); // getting list names to display in box
+  //       setSelectOptions(data);
+  //       console.log(data);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
+  //   getSelectOptions();
+  // }, []);
 
   const list = (anchor) => (
     <div className="list">
@@ -154,9 +152,9 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
               <label htmlFor="boxSelect">Box:</label>
               <Form.Select aria-label="boxSelect" onChange={handleChange} name="list_id" value={values.list_id}>
                 <option value="placeholder">Select a Box</option>
-                {selectOptions.map((listName) => (
-                  <option key={listName.list_id} value={listName.list_id} >
-                    {listName.list_name} 
+                {listNames.map((item) => (
+                  <option key={item.list_id} value={item.list_id} >
+                    {item.list_name} 
                   </option>
                 ))} {/*Here displaying box names - also using it to get the list id for each boxes to put into DB*/}
                 {/*https://stackoverflow.com/a/67454511 - alongside previously used code for persistentdrawer*/}

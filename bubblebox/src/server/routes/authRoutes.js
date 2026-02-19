@@ -80,7 +80,7 @@ router.get("/boxnames", (req, res) => {
                 return res.status(500).send("Internal Server Error!")
             } else {
                 console.log("sending list names!!")
-                console.log(result)
+                console.log("result boxnames", result)
                 return res.status(200).json(result);
             }
         })
