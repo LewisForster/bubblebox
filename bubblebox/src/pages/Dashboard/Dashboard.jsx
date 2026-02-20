@@ -16,6 +16,7 @@ function Dashboard() {
   const [taskList, setTaskList] = useState([]);
   
   const [loaded, setLoaded] = useState(false);
+  
 
 
   console.log("hi", isOpen);
@@ -66,5 +67,7 @@ function Dashboard() {
     <BoxCanvas taskList={taskList}/> {/*https://stackoverflow.com/a/72395897/*/}
     </div> //https://stackoverflow.com/a/60454055
   );
+
+
 }
 export default Dashboard;
