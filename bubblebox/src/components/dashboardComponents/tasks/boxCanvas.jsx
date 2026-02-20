@@ -183,7 +183,7 @@ return (
   //       { x: 0, y: containerHeight + STATIC_DENSITY },
   //     ])
   // }
-  // }, [windowWidth, windowHeight, scene,])
+  // }, [windowWidth, windowHeight, scene,])  // https://www.paulie.dev/posts/2020/08/react-hooks-and-matter-js/
 
 
 }
