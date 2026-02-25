@@ -1,21 +1,21 @@
-
 import { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import TaskComponent from "./taskComponent";
 import Matter from 'matter-js';
+import "./taskCSS/boxCanvas.css"
 
 
-const STATIC_DENSITY = 15;
+
 
 const BoxCanvas = ({taskList}) => {
   const [windowWidth, windowHeight] = useWindowSize()
   const width = windowWidth / 1.15;
   const height = windowHeight / 1.25
   
-  
+
+ const engineRef = useRef(null)
+ const boxRef = useRef(null);
 
 
- const sceneRef = useRef(null);
- const counterRef = useRef(null)
 
 
   useEffect(()=>{
@@ -29,39 +29,65 @@ const BoxCanvas = ({taskList}) => {
     let Composite = Matter.Composite;
     let Events = Matter.Events
 
-    let engine = Engine.create({gravity: {y:0}});
+    engineRef.current = Engine.create({gravity: {y:0}});
 
     let render = Render.create({
       
-      element: sceneRef.current,
-      engine: engine,
+      element: boxRef.current,
+      engine: engineRef.current,
       options:{
-        width: 800,
-        height: 600,
+        width: (windowWidth/1.15),
+        height: (windowHeight/1.25),
         background: 'rgba(255, 22, 177, 0.5)',
         wireframes: false,
         showVelocity:true,
+        pixelRatio: window.devicePixelRatio
       },
     })
 
-    const wall1 = Bodies.rectangle(400,0,800,50,{isStatic:true})
-    const wall2 = Bodies.rectangle(400,600,800,50,{isStatic:true})
-    const wall3 = Bodies.rectangle(800,300,50,600,{isStatic:true})
-    const wall4 = Bodies.rectangle(0,300,50,600,{isStatic:true})
+    const width = render.options.width
+    const height = render.options.height; // https://www.youtube.com/watch?v=dbPixrR9mSw - Given up on trying to get resizing to work for now
 
-
-    const ball = Bodies.circle(200,100,60, {frictionAir:0.05, friction:0.1, restitution:0.5, inertia:Infinity, density: 1})
-    const ball2 = Bodies.circle(200,100,60, {frictionAir:0.05, friction:0.1, restitution:0.5, inertia:Infinity, density: 1})
     
+
+    
+    const wall1 = Bodies.rectangle((width/2),0,width,50,{isStatic:true}) // roof
+    const floor = Bodies.rectangle((width/2),height,width,50,{isStatic:true}) // floor 
+    const wall3 = Bodies.rectangle((width),(height/2),50,height,{isStatic:true}) //right wall
+    const wall4 = Bodies.rectangle(0,(height/2),50,height,{isStatic:true}) //l wall
+
+
+    
+    const taskBodies = taskList.map(item=>
+      TaskComponent(item, width,height))
+      
+
+  if (engineRef && engineRef.current.world){
+  Matter.Composite.add(engineRef.current.world,[wall1,floor,wall3,wall4]);
+  Matter.Composite.add(engineRef.current.world,taskBodies) // Won't accept taskBodies as a nested array
+  }
+    
+
   Render.run(render);
-  const runner = Runner.create();
-  Runner.run(runner,engine);
+  const delta = 1000 / 60;
+  const subSteps = 3;
+  const subDelta = delta / subSteps;
+
+  (function run() {
+    window.requestAnimationFrame(run);
+    for (let i = 0; i < subSteps; i += 1) {
+      Engine.update(engineRef.current, subDelta);
+    }
+  })(); // this is the only code that has worked to stop things going through walls
+  // https://github.com/liabru/matter-js/issues/5#issuecomment-1050738814
   
 
-  Composite.add(engine.world,[ball,ball2,wall1,wall2,wall3,wall4]);
 
+ 
+  
+  
   const mouse = Mouse.create(render.canvas)
-  const mouseConstraint = MouseConstraint.create(engine,{
+  const mouseConstraint = MouseConstraint.create(engineRef.current,{
     mouse: mouse,
     constraint:{
       stiffness: 0.2,
@@ -73,82 +99,61 @@ const BoxCanvas = ({taskList}) => {
   
   
 
-  Composite.add(engine.world,mouseConstraint);
+  Composite.add(engineRef.current.world,mouseConstraint);
 
   render.mouse = mouse;
 
   Render.lookAt(render,{
     min:{x:0, y:0},
-    max: {x:800, y:600}
-  })
-
-
-  let dragBody = null;
-
-  Events.on(engine, 'beforeUpdate', ()=>{
-     if (dragBody != null) {
-        if (dragBody.velocity.x > 5.0) {
-            Matter.Body.setVelocity(dragBody, {x: 5, y: dragBody.velocity.y });
-                  console.log("1")
-        }
-        if (dragBody.velocity.y > 15.0) {
-            Matter.Body.setVelocity(dragBody, {x: dragBody.velocity.x, y: 5 });
-                  console.log("2")
-        }
-        if (dragBody.positionImpulse.x > 5.0) {
-            dragBody.positionImpulse.x = 5.0;
-                  console.log("3")
-        }
-        if (dragBody.positionImpulse.y > 5.0) {
-            dragBody.positionImpulse.y = 5.0;
-                  console.log("4") //https://stackoverflow.com/a/59404351
-        }
-    }
-    console.log("null")
+    max: {x:width, y:height}
   })
 
   
- Events.on(mouseConstraint, 'startdrag', (e)=>{
-  dragBody= e.body
+
+  let dragBody = null;
+
+
+      const limitMaxSpeed = (event) => {
+      event.source.world.bodies.forEach((body) => {
+        let maxSpeed = 10
+        Matter.Body.setVelocity(body, {
+          x: Math.min(maxSpeed, Math.max(-maxSpeed, body.velocity.x)),
+          y: Math.min(maxSpeed, Math.max(-maxSpeed, body.velocity.y)),
+        })
+      }) 
+    }
+    Events.on(engineRef.current, 'beforeUpdate', limitMaxSpeed) // more code that stops tunnelling
+    // https://github.com/liabru/matter-js/issues/840#issuecomment-1881080841
+  
+
+
+
+  
+Events.on(mouseConstraint, 'startdrag', (e)=>{
+  dragBody = e.body
  })
 
+ 
 
 
-  // Events.on(engine,"afterUpdate", ()=>{
-  //   const tasks = Composite.allBodies(engine.world);
 
-  //   tasks.map(body =>{ 
-  //     if (body.isStatic) return
-
-  //     const {xMovement, yMovement} = body.velocity;
-  //     const objVelocity = Math.sqrt((xMovement*xMovement)+(yMovement*yMovement)) // pythagorean theorem - using a velocity vector to calculate velocity (since its impossible to measure the distance or time)
-
-  //     if (objVelocity > 1){
-  //       Bodies.setVelocity(body, {
-  //         x:x*(1/objVelocity),
-  //         y:y*(1/objVelocity)
-  //       })
-  //     }
-  //   }) //
-
-  // })
 
 
   return() =>{
     Render.stop(render);
-    Runner.stop(runner);
-    Engine.clear(engine);
+    Engine.clear(engineRef.current);
     render.canvas.remove();
     render.textures={};
   }
 
   
   
-},[]);
+},[taskList]);
+
 
 return (
-  <div
-  ref={sceneRef}
+  <div className='center' 
+  ref={boxRef}
   ></div> //https://github.com/liabru/matter-js/blob/master/examples/airFriction.js
 )
   
@@ -202,6 +207,8 @@ function useWindowSize(){
     },[]);
     return size; // https://stackoverflow.com/a/19014495
   }
+
+
 
 
 export default BoxCanvas;

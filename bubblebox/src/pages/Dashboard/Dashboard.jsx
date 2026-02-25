@@ -64,7 +64,7 @@ function Dashboard() {
     <div className="Home">
       <PersistentDrawer onActiveList={setActiveListID} isOpen={isOpen} onOpenChange={setOpen} listNames={listNames}/>
       <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen} listNames={listNames}/> {/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
-    <BoxCanvas taskList={taskList}/> {/*https://stackoverflow.com/a/72395897/*/}
+    {taskList.length > 0 && <BoxCanvas taskList={taskList}/>} {/*https://stackoverflow.com/a/72395897/*/} {/*ensuring task list has data in it, before sent to BoxCanvas*/}
     </div> //https://stackoverflow.com/a/60454055
   );
 

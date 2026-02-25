@@ -1,54 +1,16 @@
 import * as React from 'react';
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Stage, Layer, Circle } from 'react-konva';
+import Matter from 'matter-js';
 import { useLayoutEffect, useState } from 'react';
 
 
-function CircleCollision({c1,c2}){
-    const xcheck = c1.x() - c2.x();
-    const ycheck = c1.y()-c2.y();
 
+
+function TaskComponent(item, width, height){
+
+    return Matter.Bodies.circle(((Math.random()*width)-item.task_size), ((Math.random()*height)-item.task_size),item.task_size, {frictionAir:0.05, friction:0.1, restitution:0.5, inertia:Infinity, density: 1}) 
 }
 
-function TaskComponent({task_size, task_name, task_colour, stage_width, stage_height}){
-    const [position, setPosition] = useState({ x: window.innerWidth / 8, y: window.innerHeight / 8 });
-    console.log(task_size)
-    const radius = task_size
-    return(
-        <Circle
-        x={500}
-        y={500}
-        radius={radius}
-        fill={task_colour}
-        stroke="black"
-        strokeWidth={4}
-        draggable
-        dragBoundFunc={(pos)=>{
-            const newX = Math.max(radius, Math.min(pos.x,(stage_width-radius)))
-            const newY = Math.max(radius, Math.min(pos.y,(stage_height-radius)))
-
-            return{
-                x:newX,
-                y:newY
-            }
-        }}
-        onMouseEnter={(e, )=>{
-            document.body.style.cursor='pointer';
-        }}
-        onMouseLeave={(e, )=>{
-            document.body.style.cursor='default';
-        }}
-        onDragEnd={(e, )=>{
-            setPosition({
-                x: e.target.x(),
-                y: e.target.y()
-            })
-        }}
-
-        >
-
-        </Circle>
-            )
-        }
+// just returns an object which is put into an array which can be mapped over - will update to incorporate more of the DB info - but this is bare min. rn
 export default TaskComponent;
