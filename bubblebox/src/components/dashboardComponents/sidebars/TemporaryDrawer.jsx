@@ -180,8 +180,8 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}
               <Form.Range
                 id="sizeSlider"
                 type="range"
-                min={0}
-                max={100}
+                min={50}
+                max={200}
                 step={5}
                 value={values.taskSize}
                 onChange={handleSizeChange}

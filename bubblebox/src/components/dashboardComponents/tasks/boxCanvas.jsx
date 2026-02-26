@@ -12,8 +12,10 @@ const BoxCanvas = ({taskList}) => {
   const height = windowHeight / 1.25
   
 
- const engineRef = useRef(null)
+ const engineRef = useRef(null);
  const boxRef = useRef(null);
+ const stepRef=useRef(null);
+ const stepRef2 = useRef(null);
 
 
 
@@ -38,12 +40,16 @@ const BoxCanvas = ({taskList}) => {
       options:{
         width: (windowWidth/1.15),
         height: (windowHeight/1.25),
-        background: 'rgba(255, 22, 177, 0.5)',
+        background: 'rgba(255, 239, 219, 0.5)',
         wireframes: false,
         showVelocity:true,
         pixelRatio: window.devicePixelRatio
       },
     })
+
+    render.canvas.style.position = 'absolute';
+    render.canvas.style.top = '0';
+    render.canvas.style.left = '0';
 
     const width = render.options.width
     const height = render.options.height; // https://www.youtube.com/watch?v=dbPixrR9mSw - Given up on trying to get resizing to work for now
@@ -59,14 +65,29 @@ const BoxCanvas = ({taskList}) => {
 
     
     const taskBodies = taskList.map(item=>
-      TaskComponent(item, width,height))
+      TaskComponent(item, width,height,boxRef))
       
+      console.log("tASKBODIES", taskBodies)
 
   if (engineRef && engineRef.current.world){
-  Matter.Composite.add(engineRef.current.world,[wall1,floor,wall3,wall4]);
-  Matter.Composite.add(engineRef.current.world,taskBodies) // Won't accept taskBodies as a nested array
+  Matter.Composite.add(engineRef.current.world,[wall1,floor,wall3,wall4]); 
   }
-    
+
+  taskBodies.forEach((taskItem) =>{
+
+
+    Matter.Composite.add(engineRef.current.world, taskItem.body) // Won't accept taskBodies as a nested array -> can only add item looping over the taskbodies array
+    console.log(taskItem)
+
+
+
+    console.log("hi") 
+
+})
+
+
+
+
 
   Render.run(render);
   const delta = 1000 / 60;
@@ -74,10 +95,11 @@ const BoxCanvas = ({taskList}) => {
   const subDelta = delta / subSteps;
 
   (function run() {
-    window.requestAnimationFrame(run);
+    stepRef.current = window.requestAnimationFrame(run);
     for (let i = 0; i < subSteps; i += 1) {
       Engine.update(engineRef.current, subDelta);
     }
+    taskBodies.forEach(taskItem => taskItem.render()); // calling the render function for each taskItem - tracking where the text is - keeping it centred on the bubble
   })(); // this is the only code that has worked to stop things going through walls
   // https://github.com/liabru/matter-js/issues/5#issuecomment-1050738814
   
@@ -95,11 +117,12 @@ const BoxCanvas = ({taskList}) => {
         visible:false
       }
     }
-  });
+  }); 
   
   
 
   Composite.add(engineRef.current.world,mouseConstraint);
+  
 
   render.mouse = mouse;
 
@@ -122,7 +145,7 @@ const BoxCanvas = ({taskList}) => {
         })
       }) 
     }
-    Events.on(engineRef.current, 'beforeUpdate', limitMaxSpeed) // more code that stops tunnelling
+    Events.on(engineRef.current, 'beforeUpdate', limitMaxSpeed) // more code that stops tunnelling (phasing through walls)
     // https://github.com/liabru/matter-js/issues/840#issuecomment-1881080841
   
 
@@ -139,11 +162,17 @@ Events.on(mouseConstraint, 'startdrag', (e)=>{
 
 
 
+
   return() =>{
     Render.stop(render);
     Engine.clear(engineRef.current);
+    World.clear(engineRef.current.world);
     render.canvas.remove();
+    render.canvas = null;
+    render.context=null;
     render.textures={};
+    window.cancelAnimationFrame(stepRef.current)
+    window.cancelAnimationFrame(stepRef2.current)
   }
 
   
@@ -152,7 +181,7 @@ Events.on(mouseConstraint, 'startdrag', (e)=>{
 
 
 return (
-  <div className='center' 
+  <div className='center' id="test"
   ref={boxRef}
   ></div> //https://github.com/liabru/matter-js/blob/master/examples/airFriction.js
 )
