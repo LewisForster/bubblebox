@@ -62,7 +62,7 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}
 
 
   const handleSubmit = async (e) => { //same logic as login - unvalidated currently
-    e.preventDefault(); // prevents firing of submit
+  e.preventDefault();
 
     const url = 'http://localhost:4000/tasks/saveTask'
 
@@ -71,8 +71,8 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}
     switch (res.status){
       case 200:
         console.log('success!');
-        break;
-      
+        window.location.reload(false);
+      break;
       case 500:
         console.log('error!')
         break;
