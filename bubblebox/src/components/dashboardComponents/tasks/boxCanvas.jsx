@@ -163,8 +163,8 @@ Events.on(mouseConstraint, 'startdrag', (e)=>{
 
 
 
-  return() =>{
-    Render.stop(render);
+  return() =>{ //cleanup function 
+    Render.stop(render); 
     Engine.clear(engineRef.current);
     World.clear(engineRef.current.world);
     render.canvas.remove();
@@ -173,6 +173,7 @@ Events.on(mouseConstraint, 'startdrag', (e)=>{
     render.textures={};
     window.cancelAnimationFrame(stepRef.current)
     window.cancelAnimationFrame(stepRef2.current)
+    taskBodies.forEach(taskItem =>taskItem.element.remove())  // reason bubble text would render in background - was not in cleanup function
   }
 
   

@@ -31,13 +31,13 @@ function TaskComponent(item, width, height,boxRef){
         x: posx,
         y: posy,
         body: Matter.Bodies.circle(posx,posy,item.task_size, {frictionAir:0.05, friction:0.1, restitution:0.5, inertia:Infinity, density: 1, render:{fillStyle:item.task_colour, text:{content:"Test",color:"blue",size:16,family:"Papyrus"}}}),
-        elem: e1,
+        element: e1,
         render(){
             const x = this.body.position.x
             const y = this.body.position.y
 
-            this.elem.style.top = `${y-10}px`
-            this.elem.style.left = `${x-15}px`
+            this.element.style.top = `${y-10}px`
+            this.element.style.left = `${x-15}px`
             
 
         
