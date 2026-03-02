@@ -93,7 +93,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-export default function PersistentDrawerLeft({isOpen, onOpenChange, onActiveList, listNames}) {
+export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask, onActiveList, listNames}) {
   const navigate = useNavigate();  
     
     const handleLogout = async() =>{
@@ -140,6 +140,11 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange, onActiveList
     setOpen(false);
   };
 
+
+  const openChangeTaskChange = () => {
+    onOpenChange(!isOpen);
+    onChangeTask(null);
+  }
 
   // const getListID = (item) =>{
   //   console.log(item.list_id);
@@ -192,7 +197,7 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange, onActiveList
         <Divider />
         <List>
           <ListItem disablePadding>
-            <ListItemButton onClick={()=> onOpenChange(!isOpen)}>
+            <ListItemButton onClick={()=> openChangeTaskChange()}>
               <ListItemIcon>
                 <AddCircleItem/>
               </ListItemIcon>

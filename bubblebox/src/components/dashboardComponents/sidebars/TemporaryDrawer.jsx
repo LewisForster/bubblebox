@@ -33,7 +33,7 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
 
     
   const [values,setValues] = React.useState({
-    task_id:activeTaskID,
+    task_id:null,
     list_id:"",
     taskName:"",
     taskDescription:"",
@@ -65,6 +65,17 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
 
       })
 
+    } else{
+      setValues({
+    task_id:null,
+    list_id:"",
+    taskName:"",
+    taskDescription:"",
+    taskSize:0,
+    taskPriority:"0",
+    taskColour:colourGen(), // will need to update to not just randomly reset colours
+    taskReminder:null,
+    taskDue:new Date(),})
     }
   }
 
