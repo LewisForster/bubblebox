@@ -6,7 +6,7 @@ import "./taskCSS/boxCanvas.css"
 
 
 
-const BoxCanvas = ({taskList}) => {
+const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
   const [windowWidth, windowHeight] = useWindowSize()
   const width = windowWidth / 1.15;
   const height = windowHeight / 1.25
@@ -119,6 +119,8 @@ const BoxCanvas = ({taskList}) => {
     }
   }); 
   
+
+
   
 
   Composite.add(engineRef.current.world,mouseConstraint);
@@ -157,6 +159,14 @@ Events.on(mouseConstraint, 'startdrag', (e)=>{
  })
 
  
+ boxRef.current.addEventListener('dblclick', (e) =>{
+  if (mouseConstraint.body){
+      if (!mouseConstraint.body.isStatic)
+      onTaskSelect(mouseConstraint.body.id.id)
+      console.log(mouseConstraint.body.id.id)
+  }
+ })
+
 
 
 

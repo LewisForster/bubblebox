@@ -21,7 +21,7 @@ import { registerLocale, setDefaultLocale, DatePicker } from "react-datepicker";
 import { es } from "date-fns/locale/es";
 import { render } from "ejs";
 
-export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}) {
+export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID}) {
   const navigate = useNavigate();
   const [state, setState] = React.useState({
     top: false,
@@ -30,9 +30,10 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}
     right: false,
   });
 
+
     
   const [values,setValues] = React.useState({
-    task_id:null,
+    task_id:activeTaskID,
     list_id:"",
     taskName:"",
     taskDescription:"",
@@ -43,6 +44,34 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}
     taskDue:new Date(),
 
   }); // reused logic from the login 
+
+
+  const fetchData = async () =>{
+    const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID }})
+    const selectedTask = (res.data.find(item=>item.task_id == activeTaskID))
+  
+
+    if (selectedTask){
+      setValues({
+        task_id:activeTaskID,
+        list_id:activeListID,
+        taskName:selectedTask.task_name,
+        taskDescription:selectedTask.task_description,
+        taskSize:selectedTask.task_size,
+        taskPriority:selectedTask.task_priority,
+        taskColour:selectedTask.task_colour,
+        taskReminder:selectedTask.taskReminder,
+        taskDue:selectedTask.task_due
+
+      })
+
+    }
+  }
+
+
+React.useEffect(()=>{
+  fetchData()
+},[activeTaskID, activeListID])
 
   const handleSizeChange = (e) =>{
     const value = e.target.value;
@@ -81,6 +110,7 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}
   }
 
 
+  
   const handleChange = (e) => { //same logic as login - also unvalidated currently
     const { name, value } = e.target;// stores field name and input
     console.log('SELECT CHANGE:', name, value);
@@ -192,7 +222,7 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange, listNames}
           <ListItem>
             <div className="priorityArea">
               <label htmlFor="prioritySelect">Priority:</label>
-              <Form.Select aria-label="prioritySelect" onChange={handleChange} name="taskPriority">
+              <Form.Select aria-label="prioritySelect" onChange={handleChange} name="taskPriority" value={values.taskPriority}>
                 <option value="0">Priority 0</option>
                 <option value="1">Priority 1</option>
                 <option value="2">Priority 2</option>

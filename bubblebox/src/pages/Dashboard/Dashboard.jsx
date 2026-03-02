@@ -10,17 +10,23 @@ import TaskComponent from "@/components/dashboardComponents/tasks/taskComponent.
 
 function Dashboard() {
   const [authenticated, setAuthenticated] = useState(null)
-  const [activeListId, setActiveListID] = useState(null)
+  const [activeListID, setActiveListID] = useState(null)
   const [listNames, setListNames] = useState(([]))
   const [isOpen, setOpen] = useState(false);
   const [taskList, setTaskList] = useState([]);
+  const [activeTaskID, setActiveTaskID] = useState(null)
   
   const [loaded, setLoaded] = useState(false);
-  
+  const [userID, setUserID] = useState(null)
 
 
   console.log("hi", isOpen);
-  console.log("hi2",activeListId)
+  console.log("hi2",activeListID)
+
+  const getTaskID = (taskID) =>{
+    setActiveTaskID(taskID);
+    setOpen(!isOpen);
+  }
 
   useEffect(()=>{
     
@@ -28,6 +34,7 @@ function Dashboard() {
     .then(res=>{
       console.log("res", res.data);
       setAuthenticated(res.data.authenticated);
+      setUserID(res.data.userID)
     })
     .catch((err)=>{
       console.log("err:", err);
@@ -48,23 +55,25 @@ function Dashboard() {
 
    useEffect(()=>{
     async function fetchTaskInfo() {
-    if (activeListId){
-     const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListId}})
-
+      if (authenticated){
+      if (activeListID){
+        console.log("active List ID", activeListID)
+     const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID }})
       setTaskList(res.data)
       console.log("tasks:", res.data)
     }
   }
+  }
   fetchTaskInfo();
-  }, [activeListId])
+  }, [activeListID])
 
 
 
   return (
     <div className="Home">
       <PersistentDrawer onActiveList={setActiveListID} isOpen={isOpen} onOpenChange={setOpen} listNames={listNames}/>
-      <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen} listNames={listNames}/> {/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
-    {taskList.length > 0 && <BoxCanvas taskList={taskList}/>} {/*https://stackoverflow.com/a/72395897/*/} {/*ensuring task list has data in it, before sent to BoxCanvas*/}
+      {userID != null && activeListID != null && <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen} listNames={listNames} userID={userID} activeListID={activeListID} activeTaskID={activeTaskID}/> }{/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
+    {taskList.length > 0 && <BoxCanvas taskList={taskList} isOpen={isOpen} onOpenChange={setOpen} onTaskSelect={getTaskID} />} {/*https://stackoverflow.com/a/72395897/*/} {/*ensuring task list has data in it, before sent to BoxCanvas*/}
     </div> //https://stackoverflow.com/a/60454055
   );
 
