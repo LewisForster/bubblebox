@@ -29,7 +29,7 @@ function TaskComponent(item, width, height,boxRef){
     const item1 = {
         x: posx,
         y: posy,
-        body: Matter.Bodies.circle(posx,posy,item.task_size, {frictionAir:0.05, friction:0.1, restitution:0.5, inertia:Infinity, density: 1, id:{id:item.task_id}, render:{fillStyle:item.task_colour, text:{content:"Test",color:"blue",size:16,family:"Papyrus"}}}),
+        body: Matter.Bodies.circle(posx,posy,item.task_size,  {label: item.task_id, frictionAir:0.05, friction:0.1, restitution:0.5, inertia:Infinity, density: 1, render:{fillStyle:item.task_colour, text:{content:"Test",color:"blue",size:16,family:"Papyrus"}}}),
         element: e1,
         render(){
             const x = this.body.position.x

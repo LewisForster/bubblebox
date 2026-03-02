@@ -99,13 +99,22 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
     for (let i = 0; i < subSteps; i += 1) {
       Engine.update(engineRef.current, subDelta);
     }
-    taskBodies.forEach(taskItem => taskItem.render()); // calling the render function for each taskItem - tracking where the text is - keeping it centred on the bubble
+    taskBodies.forEach(taskItem => {
+
+      if ((taskItem.body.position.x - taskItem.body.circleRadius) <0 // cannot go past left wall - x cannot be less than 0
+    || (taskItem.body.position.y - taskItem.body.circleRadius)<0 //cannot go underneath ground - y cannot be less than 0
+    || (taskItem.body.position.x+taskItem.body.circleRadius) > width // cannot go past width - x cannot be greater than screenwidth
+    || (taskItem.body.position.y+taskItem.body.circleRadius) > height){ // cannot go past height - y cannot be greater than screenheight
+        Matter.Body.setPosition(taskItem.body,{x:width/2,y:height/2})
+        console.log("HELLOOOOOOO")
+      } 
+      taskItem.render()}); // calling the render function for each taskItem - tracking where the text is - keeping it centred on the bubble
   })(); // this is the only code that has worked to stop things going through walls
   // https://github.com/liabru/matter-js/issues/5#issuecomment-1050738814
   
 
 
- 
+ // have to check if x,y - radius is in the boundary
   
   
   const mouse = Mouse.create(render.canvas)
@@ -162,8 +171,8 @@ Events.on(mouseConstraint, 'startdrag', (e)=>{
  boxRef.current.addEventListener('dblclick', (e) =>{
   if (mouseConstraint.body){
       if (!mouseConstraint.body.isStatic)
-      onTaskSelect(mouseConstraint.body.id.id)
-      console.log(mouseConstraint.body.id.id)
+      onTaskSelect(mouseConstraint.body.label)
+      console.log(mouseConstraint.body.label)
   }
  })
 
