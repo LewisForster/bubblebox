@@ -46,10 +46,11 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
   }); // reused logic from the login 
 
 
-  const fetchData = async () =>{
-    const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID }})
+  const fetchData = async (del = null,) =>{
+    const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID,}})
     const selectedTask = (res.data.find(item=>item.task_id == activeTaskID))
   
+
 
     if (selectedTask){
       setValues({
@@ -61,7 +62,7 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
         taskPriority:selectedTask.task_priority,
         taskColour:selectedTask.task_colour,
         taskReminder:selectedTask.taskReminder,
-        taskDue:selectedTask.task_due
+        taskDue:selectedTask.task_due,
 
       })
 
@@ -99,6 +100,27 @@ React.useEffect(()=>{
 
 
   const [selectedDateTime, setSelectedDateTime] = React.useState(new Date());
+
+  const deleteBubble = async (e) =>{
+
+    const res1 = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID,}})
+    const selectedTask = (res1.data.find(item=>item.task_id == activeTaskID))
+
+
+    const res2 = await axios.post('http://localhost:4000/tasks/deleteTask', {task_id: activeTaskID})
+    switch (res2.status){
+      case 200:
+        console.log("delete success")
+        window.location.reload(false)
+        break;
+
+      case 500:
+        console.log("error deleting task")
+        break;
+    }
+
+    
+    }
 
 
   const handleSubmit = async (e) => { //same logic as login - unvalidated currently
@@ -267,6 +289,13 @@ React.useEffect(()=>{
           </ListItem>
           
           </Form>
+          <ListItem sx={{justifyContent:'center'}}> {/*getting rid of MUI's stupid padding */}
+            <div className="buttonWrapper">
+            <Button variant="primary" id="red" type="delete" onClick={deleteBubble}>
+                Delete
+              </Button>
+            </div>
+            </ListItem>
         </List>
         <Divider />
       </Box>

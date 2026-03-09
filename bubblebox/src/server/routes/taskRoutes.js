@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post("/saveTask", (req, res) => {
     db_con.beginTransaction(err => {
-        const { task_id, list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue } = req.body;
+        const { task_id, list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, del, taskDue, } = req.body;
 
         if (task_id) {
             const query = 'UPDATE tasks SET list_ID = ?, task_name = ?, task_description = ?, task_size = ?, task_priority = ?, task_colour = ?, task_reminder = ?, task_due = ? WHERE task_id = ? '
@@ -48,6 +48,30 @@ router.post("/saveTask", (req, res) => {
 }
 )
 
+
+router.post("/deleteTask", (req, res) => {
+    db_con.beginTransaction(err => {
+        const { task_id } = req.body
+        console.log("task_id", task_id)
+        const query = 'DELETE FROM tasks WHERE task_id = ?'
+        console.log("taskid yes", task_id)
+        db_con.query(query, [task_id], (err, result) => {
+            if (err) {
+                return db_con.rollback(() => {
+                    res.status(500).send("Error deleting task")
+                    console.log(err)
+                })
+            } else {
+                return db_con.commit(() => {
+                    console.log("deleted", result)
+                    res.status(200).json({ deleted: true })
+                })
+            }
+        })
+    }
+    )
+})
+
 router.get("/taskInfo", (req, res) => {
     const { list_id, } = req.query;
     const query = `SELECT task_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due FROM tasks
@@ -75,3 +99,4 @@ router.get("/taskData", (req, res) => {
     const { task_id } = req.query
 })
 export default router;
+

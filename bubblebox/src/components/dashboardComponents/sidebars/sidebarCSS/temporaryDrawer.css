@@ -65,6 +65,9 @@ input {
     margin-left: 2.5%;
 }
 
+#red {
+    background-color: red;
+}
 
 .selectArea {
     margin-top: 5%;
