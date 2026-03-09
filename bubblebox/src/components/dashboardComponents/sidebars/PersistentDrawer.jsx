@@ -1,4 +1,4 @@
-import "../navbar/navbar.css";
+import "@/components/navbar/navbar.css";
 import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -27,7 +27,7 @@ import Nav from 'react-bootstrap/Nav';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
 import { useNavigate } from "react-router-dom";
-import sleep from "../misc/sleep.jsx";
+import sleep from "../../misc/sleep.jsx";
 import axios from "axios";
 
 
@@ -93,7 +93,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-export default function PersistentDrawerLeft({isOpen, onOpenChange}) {
+export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask, onActiveList, listNames}) {
   const navigate = useNavigate();  
     
     const handleLogout = async() =>{
@@ -108,18 +108,18 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange}) {
 
   
 
-  const [listNames, setListNames] = React.useState([]);
-  React.useEffect(()=>{
-    const getListNames = async() => {
-      try{
-        const {data} = await axios.get("http://localhost:4000/auth/tasknames", { credentials: "include" })
-        setListNames(data);
-        console.log(data);
+  // const [listNames, setListNames] = React.useState([]);
+  // React.useEffect(()=>{
+  //   const getListNames = async() => {
+  //     try{
+  //       const {data} = await axios.get("http://localhost:4000/auth/boxnames", { credentials: "include" })
+  //       setListNames(data);
+  //       console.log(data);
 
-      }catch (err) {
-      console.log(err)
-    }}
-  getListNames()}, []) //https://devtrium.com/posts/dependency-arrays
+  //     }catch (err) {
+  //     console.log(err)
+  //   }}
+  // getListNames()}, []) 
 
   // only need this fetch on page load - using dependency array
 
@@ -141,6 +141,15 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange}) {
   };
 
 
+  const openChangeTaskChange = () => {
+    onOpenChange(!isOpen);
+    onChangeTask(null);
+  }
+
+  // const getListID = (item) =>{
+  //   console.log(item.list_id);
+  //   return item.list_id
+  // }
 
   
 
@@ -188,7 +197,7 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange}) {
         <Divider />
         <List>
           <ListItem disablePadding>
-            <ListItemButton onClick={()=> onOpenChange(!isOpen)}>
+            <ListItemButton onClick={()=> openChangeTaskChange()}>
               <ListItemIcon>
                 <AddCircleItem/>
               </ListItemIcon>
@@ -199,7 +208,7 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange}) {
         <List>
           {listNames.map((item) => (
             <ListItem key={item.list_id} disablePadding>
-              <ListItemButton>
+              <ListItemButton onClick={()=>onActiveList(item.list_id)}>
                 <ListItemIcon>
                   {item.list_id % 2 === 0 ? <InboxIcon /> : <MailIcon />}
                 </ListItemIcon>

@@ -69,18 +69,24 @@ router.post('/logout', (req, res, next) => {
 
 
 router.get("/auth", (req, res) => {
-    res.json({ authenticated: Boolean(req.user) });
+    if (req.user) {
+        res.json({ authenticated: Boolean(req.user), userID: (req.user.id) });
+    } else {
+        res.json({ authenticated: Boolean(req.user) })
+    }
 });
 
-router.get("/tasknames", (req, res) => {
+
+
+router.get("/boxnames", (req, res) => {
     if (req.user) {
-        const query = 'SELECT list_id, list_name FROM tasklist WHERE user_id = ?';
+        const query = 'SELECT list_id, list_name FROM tasklist INNER JOIN users ON tasklist.user_id=users.id WHERE user_id = ? ';
         db_con.query(query, [req.user.id], (err, result) => {
             if (err) {
                 return res.status(500).send("Internal Server Error!")
             } else {
                 console.log("sending list names!!")
-                console.log(result)
+                console.log("result boxnames", result)
                 return res.status(200).json(result);
             }
         })

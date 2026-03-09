@@ -1,5 +1,5 @@
 import * as React from "react";
-import "./temporaryDrawer.css";
+import "./sidebarCSS/temporaryDrawer.css";
 import "react-datepicker/dist/react-datepicker.css";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -12,16 +12,16 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
-import "../navbar/navbar.css";
+import "@/components/navbar/navbar.css";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import colourGen from "../misc/colourGen.jsx";
+import colourGen from "../../misc/colourGen.jsx";
 import { registerLocale, setDefaultLocale, DatePicker } from "react-datepicker";
 import { es } from "date-fns/locale/es";
 import { render } from "ejs";
 
-export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
+export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID}) {
   const navigate = useNavigate();
   const [state, setState] = React.useState({
     top: false,
@@ -29,6 +29,7 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
     bottom: false,
     right: false,
   });
+
 
     
   const [values,setValues] = React.useState({
@@ -43,6 +44,46 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
     taskDue:new Date(),
 
   }); // reused logic from the login 
+
+
+  const fetchData = async (del = null,) =>{
+    const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID,}})
+    const selectedTask = (res.data.find(item=>item.task_id == activeTaskID))
+  
+
+
+    if (selectedTask){
+      setValues({
+        task_id:activeTaskID,
+        list_id:activeListID,
+        taskName:selectedTask.task_name,
+        taskDescription:selectedTask.task_description,
+        taskSize:selectedTask.task_size,
+        taskPriority:selectedTask.task_priority,
+        taskColour:selectedTask.task_colour,
+        taskReminder:selectedTask.taskReminder,
+        taskDue:selectedTask.task_due,
+
+      })
+
+    } else{
+      setValues({
+    task_id:null,
+    list_id:"",
+    taskName:"",
+    taskDescription:"",
+    taskSize:0,
+    taskPriority:"0",
+    taskColour:colourGen(), // will need to update to not just randomly reset colours
+    taskReminder:null,
+    taskDue:new Date(),})
+    }
+  }
+
+
+React.useEffect(()=>{
+  fetchData()
+},[activeTaskID, activeListID])
 
   const handleSizeChange = (e) =>{
     const value = e.target.value;
@@ -60,9 +101,30 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
 
   const [selectedDateTime, setSelectedDateTime] = React.useState(new Date());
 
+  const deleteBubble = async (e) =>{
+
+    const res1 = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID,}})
+    const selectedTask = (res1.data.find(item=>item.task_id == activeTaskID))
+
+
+    const res2 = await axios.post('http://localhost:4000/tasks/deleteTask', {task_id: activeTaskID})
+    switch (res2.status){
+      case 200:
+        console.log("delete success")
+        window.location.reload(false)
+        break;
+
+      case 500:
+        console.log("error deleting task")
+        break;
+    }
+
+    
+    }
+
 
   const handleSubmit = async (e) => { //same logic as login - unvalidated currently
-    e.preventDefault(); // prevents firing of submit
+  e.preventDefault();
 
     const url = 'http://localhost:4000/tasks/saveTask'
 
@@ -71,8 +133,8 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
     switch (res.status){
       case 200:
         console.log('success!');
-        break;
-      
+        window.location.reload(false);
+      break;
       case 500:
         console.log('error!')
         break;
@@ -81,6 +143,7 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
   }
 
 
+  
   const handleChange = (e) => { //same logic as login - also unvalidated currently
     const { name, value } = e.target;// stores field name and input
     console.log('SELECT CHANGE:', name, value);
@@ -102,21 +165,21 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
 
   const [selectOptions, setSelectOptions] = React.useState([]);
 
-  React.useEffect(() => {
-    const getSelectOptions = async () => {
-      try {
-        const { data } = await axios.get(
-          "http://localhost:4000/auth/tasknames",
-          { credentials: "include" },
-        ); // getting list names to display in box
-        setSelectOptions(data);
-        console.log(data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-    getSelectOptions();
-  }, []);
+  // React.useEffect(() => {
+  //   const getSelectOptions = async () => {
+  //     try {
+  //       const { data } = await axios.get(
+  //         "http://localhost:4000/auth/boxnames",
+  //         { credentials: "include" },
+  //       ); // getting list names to display in box
+  //       setSelectOptions(data);
+  //       console.log(data);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
+  //   getSelectOptions();
+  // }, []);
 
   const list = (anchor) => (
     <div className="list">
@@ -152,9 +215,9 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
               <label htmlFor="boxSelect">Box:</label>
               <Form.Select aria-label="boxSelect" onChange={handleChange} name="list_id" value={values.list_id}>
                 <option value="placeholder">Select a Box</option>
-                {selectOptions.map((listName) => (
-                  <option key={listName.list_id} value={listName.list_id} >
-                    {listName.list_name} 
+                {listNames.map((item) => (
+                  <option key={item.list_id} value={item.list_id} >
+                    {item.list_name} 
                   </option>
                 ))} {/*Here displaying box names - also using it to get the list id for each boxes to put into DB*/}
                 {/*https://stackoverflow.com/a/67454511 - alongside previously used code for persistentdrawer*/}
@@ -180,8 +243,8 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
               <Form.Range
                 id="sizeSlider"
                 type="range"
-                min={0}
-                max={100}
+                min={50}
+                max={200}
                 step={5}
                 value={values.taskSize}
                 onChange={handleSizeChange}
@@ -192,7 +255,7 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
           <ListItem>
             <div className="priorityArea">
               <label htmlFor="prioritySelect">Priority:</label>
-              <Form.Select aria-label="prioritySelect" onChange={handleChange} name="taskPriority">
+              <Form.Select aria-label="prioritySelect" onChange={handleChange} name="taskPriority" value={values.taskPriority}>
                 <option value="0">Priority 0</option>
                 <option value="1">Priority 1</option>
                 <option value="2">Priority 2</option>
@@ -226,6 +289,13 @@ export default function AnchorTemporaryDrawer({ isOpen, onOpenChange }) {
           </ListItem>
           
           </Form>
+          <ListItem sx={{justifyContent:'center'}}> {/*getting rid of MUI's stupid padding */}
+            <div className="buttonWrapper">
+            <Button variant="primary" id="red" type="delete" onClick={deleteBubble}>
+                Delete
+              </Button>
+            </div>
+            </ListItem>
         </List>
         <Divider />
       </Box>
