@@ -13,7 +13,7 @@ function Login() {
       </a>
 
       <div className="login-form">
-        <LoginPage></LoginPage>
+        <LoginPage showNameField={1}></LoginPage>
       </div>
     </div>
   );

@@ -7,41 +7,58 @@ import Button from "react-bootstrap/Button";
 import List from "@mui/material/List";
 import Divider from "@mui/material/Divider";
 import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import InboxIcon from "@mui/icons-material/MoveToInbox";
-import MailIcon from "@mui/icons-material/Mail";
+import Checkbox from "@mui/material/Checkbox"
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import Select from '@mui/material/Select';
+
+
+
 import "@/components/navbar/navbar.css";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import colourGen from "../../misc/colourGen.jsx";
-import { registerLocale, setDefaultLocale, DatePicker } from "react-datepicker";
-import { es } from "date-fns/locale/es";
-import { render } from "ejs";
+import { FormControlLabel, MenuItem } from "@mui/material";
+import * as dayjs from 'dayjs'
+
 
 export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID}) {
-  const navigate = useNavigate();
-  const [state, setState] = React.useState({
-    top: false,
-    left: false,
-    bottom: false,
-    right: false,
-  });
+
+  const [customReminder, setCustomReminder] = React.useState(false)
+
+  const [reminderTrue, setReminderTrue] = React.useState(false)
+  const [selectedDateTime, setSelectedDateTime] = React.useState(dayjs())
+
+  const handleCheckChange = (event) => {
+
+    console.log("bef", values.userRemEmail)
+
+    const a = +(!event.target.checked)
 
 
-    
+
+    setValues({...values, userRemEmail:a, dueRemEmail:0}) //resetting the reminder flag on clicking checkbox
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Unary_plus
+
+
+    console.log("target being set:", a)
+  }
+  
   const [values,setValues] = React.useState({
     task_id:null,
     list_id:"",
     taskName:"",
     taskDescription:"",
-    taskSize:0,
+    taskSize:100,
     taskPriority:"0",
     taskColour:colourGen(), // will need to update to not just randomly reset colours
-    taskReminder:null,
-    taskDue:new Date(),
+    taskReminder:dayjs(),
+    taskDue:dayjs(),
+    userRemEmail:0,
+    dueRemEmail:0,
+    
 
   }); // reused logic from the login 
 
@@ -63,43 +80,51 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
         taskColour:selectedTask.task_colour,
         taskReminder:selectedTask.taskReminder,
         taskDue:selectedTask.task_due,
-
+        userRemEmail:selectedTask.user_reminder_emailed,
+        dueRemEmail:selectedTask.due_reminder_emailed
       })
 
     } else{
       setValues({
     task_id:null,
-    list_id:"",
+    list_id:activeListID,
     taskName:"",
     taskDescription:"",
-    taskSize:0,
+    taskSize:100,
     taskPriority:"0",
     taskColour:colourGen(), // will need to update to not just randomly reset colours
-    taskReminder:null,
-    taskDue:new Date(),})
+    taskReminder:dayjs(),
+    taskDue:dayjs(),
+    userRemEmail:0,
+    dueRemEmail:0})
     }
   }
 
 
+  
 React.useEffect(()=>{
   fetchData()
-},[activeTaskID, activeListID])
+},[activeTaskID, activeListID,])
 
   const handleSizeChange = (e) =>{
     const value = e.target.value;
-    setSize(value)
     setValues({...values, taskSize:value}) //reused from login, changed for specifically range input
   }
   
 
   const handleDateChange = (date) =>{
-    setSelectedDateTime(date)
-    setValues({...values,taskDue:date})
+    date = dayjs(date).set('second',0)
+    const d1 = dayjs(date).toISOString()
+    setSelectedDateTime(d1)
+    setValues({...values,taskDue:d1, dueRemEmail:0})
   } // again, same thing, changed for date specifically
-  registerLocale("es", es); 
 
-
-  const [selectedDateTime, setSelectedDateTime] = React.useState(new Date());
+  const handleReminderChange = date => {
+    const d1 = dayjs(date).toISOString()
+    setCustomReminder(date)
+    setValues({...values,taskReminder:d1, dueRemEmail:0})
+  }
+  
 
   const deleteBubble = async (e) =>{
 
@@ -133,6 +158,7 @@ React.useEffect(()=>{
     switch (res.status){
       case 200:
         console.log('success!');
+        console.log(values)
         window.location.reload(false);
       break;
       case 500:
@@ -146,11 +172,16 @@ React.useEffect(()=>{
   
   const handleChange = (e) => { //same logic as login - also unvalidated currently
     const { name, value } = e.target;// stores field name and input
+    
     console.log('SELECT CHANGE:', name, value);
-    setValues({ ...values, [name]: value }); // changes data - create copy of values, select and set field to that value
-  };
 
-  const [size, setSize] = React.useState(0);
+
+  
+    
+    setValues({ ...values, [name]: value, dueRemEmail: 0}); // changes data - create copy of values, select and set field to that value - resetting overdue reminder for edited tasks with dueRemEmail
+
+  };
+  
 
   const toggleDrawer = () => (event) => {
     if (
@@ -165,21 +196,6 @@ React.useEffect(()=>{
 
   const [selectOptions, setSelectOptions] = React.useState([]);
 
-  // React.useEffect(() => {
-  //   const getSelectOptions = async () => {
-  //     try {
-  //       const { data } = await axios.get(
-  //         "http://localhost:4000/auth/boxnames",
-  //         { credentials: "include" },
-  //       ); // getting list names to display in box
-  //       setSelectOptions(data);
-  //       console.log(data);
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   };
-  //   getSelectOptions();
-  // }, []);
 
   const list = (anchor) => (
     <div className="list">
@@ -239,7 +255,7 @@ React.useEffect(()=>{
           </ListItem>
           <ListItem>
             <div className="sizeSliderArea">
-              <label htmlFor="sizeSlider">Size:{size}</label>
+              <label htmlFor="sizeSlider">Size:{values.taskSize}</label>
               <Form.Range
                 id="sizeSlider"
                 type="range"
@@ -255,31 +271,57 @@ React.useEffect(()=>{
           <ListItem>
             <div className="priorityArea">
               <label htmlFor="prioritySelect">Priority:</label>
-              <Form.Select aria-label="prioritySelect" onChange={handleChange} name="taskPriority" value={values.taskPriority}>
-                <option value="0">Priority 0</option>
-                <option value="1">Priority 1</option>
-                <option value="2">Priority 2</option>
-                <option value="3">Priority 3</option>
-                <option value="4">Priority 4</option>
-              </Form.Select>
+              <Select aria-label="prioritySelect" onChange={handleChange} name="taskPriority" value={values.taskPriority}>
+                <MenuItem value="0">Priority 0</MenuItem>
+                <MenuItem value="1">Priority 1</MenuItem>
+                <MenuItem value="2">Priority 2</MenuItem>
+                <MenuItem value="3">Priority 3</MenuItem>
+                <MenuItem value="4">Priority 4</MenuItem> 
+              </Select>
             </div>
           </ListItem>
           <ListItem>
             <div className="calendarArea">
-            <label htmlFor="dateTimePicker">Due:</label>
-            <DatePicker 
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker label="Due:" 
               id="dateTimePicker"
               selected={selectedDateTime}
               onChange={handleDateChange}
-              timeInputLabel="Time:"
-              dateFormat="dd/MM/yyyy h:mm aa"
-              showTimeInput
-              value={values.taskDue}
-              name="taskDue"
-            />
+              format="DD/MM/YYYY hh:mm A"
+              minDateTime={dayjs()}
+              value={dayjs(values.taskDue)}
+              sx={{'& .MuiFormLabel-root': {color:'black'},'& .MuiButtonBase-root': {color:"black"}, '& .MuiPickersOutlinedInput-notchedOutline': {borderColor:"black"}}} //https://mui.com/material-ui/customization/how-to-customize/#overriding-nested-component-styles
+            /> 
+            </LocalizationProvider>
             
             </div>
           </ListItem>
+          <ListItem>
+            <div className="">
+              <FormControlLabel control={<Checkbox checked={!(!!values.userRemEmail)} onClick={handleCheckChange}/>}  label="Reminder?"/>
+              </div>
+          </ListItem>
+
+          {!(!!values.userRemEmail) && (  // https://stackoverflow.com/a/20093686 - userRemEmail is either 1 or 0, won't accept it as int, cast to bool
+            <>
+            <ListItem>
+            <div className="calendarArea">
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker label="Reminder:" 
+              id="dateTimePicker"
+              selected={customReminder}
+              onChange={handleReminderChange}
+              maxDateTime={dayjs(values.taskDue)}
+              format="DD/MM/YYYY hh:mm A"
+              value={dayjs(values.taskReminder)}
+              sx={{'& .MuiFormLabel-root': {color:'black'},'& .MuiButtonBase-root': {color:"black"}, '& .MuiPickersOutlinedInput-notchedOutline': {borderColor:"black"}}} //https://mui.com/material-ui/customization/how-to-customize/#overriding-nested-component-styles
+              />
+              </LocalizationProvider>
+              </div>
+              </ListItem>
+            </>
+
+          )}
           <ListItem sx={{justifyContent:'center'}}> {/*getting rid of MUI's stupid padding */}
             <div className="buttonWrapper">
             <Button variant="primary" type="submit">
@@ -287,7 +329,6 @@ React.useEffect(()=>{
               </Button>
             </div>
           </ListItem>
-          
           </Form>
           <ListItem sx={{justifyContent:'center'}}> {/*getting rid of MUI's stupid padding */}
             <div className="buttonWrapper">

@@ -34,8 +34,8 @@ passport.use(new Strategy(
                         return done(null, user);
 
                     case false:
-                        console.log("Invalid credentials");
-                        return done(null, false);
+                        console.log("Password does not match");
+                        return done(null, false, { email: user.email });
 
                     default:
                         console.log("A server occurred")

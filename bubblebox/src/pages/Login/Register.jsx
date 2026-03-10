@@ -13,7 +13,7 @@ function Register() {
       </a>
 
       <div className="login-form">
-        <LoginPage showNameField={true}></LoginPage>
+        <LoginPage showNameField={2}></LoginPage>
       </div>
     </div>
   );

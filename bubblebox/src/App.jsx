@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/misc/ProtectedRoute";
 import UserPage from "./pages/misc2/UserPage";
 import GuestRoute from "./components/misc/GuestRoute";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import ResetPassword from "./pages/Login/resetPassword";
 
 
 
@@ -21,9 +22,17 @@ function App() {
         
         <Route path="/login" element={<Login />} />
         <Route path="/Login" element={<Login />} />
+        
 
         <Route path="/Register" element={<Register />} />
         <Route path="/register" element={<Register />} />
+
+        <Route path="/ResetPassword/:token" element={<ResetPassword />} />
+        <Route path="/resetPassword/:token" element={<ResetPassword />} />
+        <Route path="/Resetpassword/:token" element={<ResetPassword />} />
+        <Route path="/resetpassword/:token" element={<ResetPassword />} />
+
+
         </Route>
 
 

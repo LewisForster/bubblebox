@@ -171,11 +171,21 @@ input {
 }
 
 .calendarArea label {
-    justify-content: center !important;
     font-size: 115%;
-    margin-left: -3%;
-    margin-right: -3.5%;
 }
+
+.calendarArea {
+    width: 100%;
+}
+
+
+
+.calendarArea #dateTimePicker {
+    width: 50% !important;
+    color: black !important;
+}
+
+
 
 .colorSelectArea label {
     justify-content: center !important;

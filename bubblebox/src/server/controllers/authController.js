@@ -2,6 +2,8 @@ import db_con from '../../config/db.js'
 import bcrypt from "bcrypt";
 import passport from 'passport';
 import { Strategy } from 'passport-local';
+import { passHash } from '../scripts/passHash.js';
+
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status - using for http codes
 
@@ -9,100 +11,58 @@ import { Strategy } from 'passport-local';
 export const registerUser = async (req, res) => {
     const { username, email, password } = req.body;
     console.log(username)
-    const saltRounds = 12;
 
 
+    const hash = await passHash(password)
+    db_con.beginTransaction(err => {
+        const query = 'INSERT INTO users (username, email, password) VALUES (?,?,?)';
+        db_con.query(query, [username, email, hash], (err, result) => {
+            if (err) {
+                if (err.errno === 1062) { // Error code for trying to enter duplicate unique values into the db - email is set as a unique value
+                    console.log("Email already exists");
+                    return db_con.rollback(() => {
+                        res.status(409).send("Email already registered")
+                    }); //409 - conflict
 
-    bcrypt.hash(password, saltRounds, function (err, hash) {
-        db_con.beginTransaction(err => {
-            const query = 'INSERT INTO users (username, email, password) VALUES (?,?,?)';
-            db_con.query(query, [username, email, hash], (err, result) => {
-                if (err) {
-                    if (err.errno === 1062) { // Error code for trying to enter duplicate unique values into the db - email is set as a unique value
-                        console.log("Email already exists");
-                        return db_con.rollback(() => {
-                            res.status(409).send("Email already registered")
-                        }); //409 - conflict
-
-                    } else {
-                        console.log("Error with values / inserting into DB: ", err);
-                        console.log(err.errno);
-                        console.log(err.code);
-                        return db_con.rollback(() => {
-                            res.status(500).send("Register Error!"); // general error, using 500 with generic message
-                        });
-                    }
+                } else {
+                    console.log("Error with values / inserting into DB: ", err);
+                    console.log(err.errno);
+                    console.log(err.code);
+                    return db_con.rollback(() => {
+                        res.status(500).send("Register Error!"); // general error, using 500 with generic message
+                    });
                 }
+            }
 
 
-                const userID = result.insertId;
+            const userID = result.insertId;
 
-                const createTLEntry = 'INSERT INTO tasklist (user_id, list_name) VALUES (?, ?)';
-                db_con.query(createTLEntry, [userID, "Untitled"], (err) => {
-                    if (err) {
-                        console.log(err.errno)
-                        console.log(err.code)
-                        return db_con.rollback(() => {
-                            res.status(500).send("Error creating tasklist!")
-                        })
-                    } else {
-                        console.log("table created, with userid", result)
-                    }
-                })
-
-
-                console.log("Row inserted");
-
-                return db_con.commit(() => {
-                    res.status(201).send("Register success!"); // 201 = created
-                })
-            });
+            const createTLEntry = 'INSERT INTO tasklist (user_id, list_name) VALUES (?, ?)';
+            db_con.query(createTLEntry, [userID, "Untitled"], (err) => {
+                if (err) {
+                    console.log(err.errno)
+                    console.log(err.code)
+                    return db_con.rollback(() => {
+                        res.status(500).send("Error creating tasklist!")
+                    })
+                } else {
+                    console.log("table created, with userid", result)
+                }
+            })
 
 
+            console.log("Row inserted");
 
+            return db_con.commit(() => {
+                res.status(201).send("Register success!"); // 201 = created
+            })
         });
 
-    })
+
+
+    });
+
 }
 
-// export const loginUser = async (req, res) => {
-//     const { email, password } = req.body;
-
-//     const findUser = "SELECT * FROM users WHERE email = ?";
-//     db_con.query(findUser, [email], (err, result) => {
-//         if (err) {
-//             console.log("Error finding user", err);
-//             return res.status(500).send("Internal Server Error");
-//         }
-//         if (result.length === 0) {
-//             console.log("User not found");
-//             return res.status(404).send("User Not Found!"); // 404 not found
-//         }
-//         console.log("User found");
-
-//         const user = result[0];
-
-//         bcrypt.compare(password, user.password, function (err, result) {
-//             if (err) {
-//                 console.log("Error:", err);
-//                 return res.status(500).send("Internal Server Error");
-//             }
-
-//             switch (result) {
-//                 case true:
-//                     console.log("Credentials match");
-//                     return res.status(200).send("Login Success! Redirecting...");
-
-//                 case false:
-//                     console.log("Invalid Credentials");
-//                     return res.status(400).send('Invalid credentials!'); //bad request - invalid credentials
-
-//                 default:
-//                     console.log("A server error occured");
-//                     return res.status(500).send("Internal Server Error!")
-//             }
-//         });
-//     })
-// };
 
 

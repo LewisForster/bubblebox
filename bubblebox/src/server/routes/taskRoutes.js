@@ -1,18 +1,19 @@
 import express from 'express'
-import passport from "passport";
 import "../../strategies/local.js";
-import session from "express-session";
 import db_con from '../../config/db.js'
 
 const router = express.Router();
 
+
+
 router.post("/saveTask", (req, res) => {
     db_con.beginTransaction(err => {
-        const { task_id, list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, del, taskDue, } = req.body;
+        const { list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue, userRemEmail, dueRemEmail, task_id, } = req.body;
 
         if (task_id) {
-            const query = 'UPDATE tasks SET list_ID = ?, task_name = ?, task_description = ?, task_size = ?, task_priority = ?, task_colour = ?, task_reminder = ?, task_due = ? WHERE task_id = ? '
-            db_con.query(query, [list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue, task_id], (err, result) => {
+            const query = `UPDATE tasks SET list_ID = ?, task_name = ?, task_description = ?, task_size = ?, task_priority = ?, task_colour = ?, task_reminder = ?, task_due = ?, user_reminder_emailed = ?, due_reminder_emailed = ?
+              WHERE task_id = ? `
+            db_con.query(query, [list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue, userRemEmail, dueRemEmail, task_id,], (err, result) => {
                 if (err) {
                     return db_con.rollback(() => {
                         res.status(500).send("Error updating task!")
@@ -25,8 +26,8 @@ router.post("/saveTask", (req, res) => {
                 }
             })
         } else {
-            const query = 'INSERT INTO tasks (list_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due) VALUES (?, ?,?, ?, ?, ?, ?, ?)'
-            db_con.query(query, [list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue], (err, result) => {
+            const query = 'INSERT INTO tasks (list_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due, user_reminder_emailed, due_reminder_emailed) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?)'
+            db_con.query(query, [list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue, userRemEmail, dueRemEmail], (err, result) => {
                 if (err) {
                     console.log("INSERT ERROR IF ERR")
                     console.log(err)
@@ -74,7 +75,7 @@ router.post("/deleteTask", (req, res) => {
 
 router.get("/taskInfo", (req, res) => {
     const { list_id, } = req.query;
-    const query = `SELECT task_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due FROM tasks
+    const query = `SELECT task_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due, user_reminder_emailed, due_reminder_emailed FROM tasks
      INNER JOIN tasklist 
      ON tasks.list_id=tasklist.list_id
      INNER JOIN users
