@@ -16,6 +16,7 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
  const boxRef = useRef(null);
  const stepRef=useRef(null);
  const stepRef2 = useRef(null);
+ const maxDensity = 0.73 // have not got this working, 0.73 was the densest, working number I got.
 
 
 
@@ -29,7 +30,8 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
     let MouseConstraint = Matter.MouseConstraint;
     let Mouse = Matter.Mouse;
     let Composite = Matter.Composite;
-    let Events = Matter.Events
+    let Events = Matter.Events;
+    let circleAreaTotal = 0
 
     engineRef.current = Engine.create({gravity: {y:0}});
 
@@ -53,6 +55,8 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
 
     const width = render.options.width
     const height = render.options.height; // https://www.youtube.com/watch?v=dbPixrR9mSw - Given up on trying to get resizing to work for now
+    const area = width*height
+    console.log("W:","H:", width, height)
 
     
 
@@ -75,10 +79,19 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
 
   taskBodies.forEach((taskItem) =>{
 
-
+    circleAreaTotal = circleAreaTotal + (Math.PI * (taskItem.body.circleRadius**2))
+    console.log("RADIUS", taskItem.body.circleRadius) // just iterating adding area to a total
+console.log("adding to circleAreaTotal", "task name:", taskItem.taskName, (Math.PI * (taskItem.body.circleRadius**2)), "circle area", circleAreaTotal)
     Matter.Composite.add(engineRef.current.world, taskItem.body) // Won't accept taskBodies as a nested array -> can only add item looping over the taskbodies array
     console.log(taskItem)
 
+    if ((circleAreaTotal/area) > maxDensity){ // using total to check if box is full, idea was to stop adding if full.
+      console.log("too many circles")
+      console.log("density is", (circleAreaTotal/area))
+    }
+    else{
+      console.log("not full, density is", (circleAreaTotal/area))
+    }
 
 
     console.log("hi") 
@@ -99,6 +112,9 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
     for (let i = 0; i < subSteps; i += 1) {
       Engine.update(engineRef.current, subDelta);
     }
+
+    
+
     taskBodies.forEach(taskItem => {
 
       if ((taskItem.body.position.x - taskItem.body.circleRadius) <0 // cannot go past left wall - x cannot be less than 0
@@ -261,3 +277,11 @@ function useWindowSize(){
 
 
 export default BoxCanvas;
+
+// idea for box fullness:
+  // (area of box) - (sum of all current circles) 
+    // (W * H) - sum(pir^2)
+
+      // https://en.wikipedia.org/wiki/Sphere_packing#Irregular_packing - Irregular packing has a density of 64%, but this is also spheres, not circles.
+      // https://en.wikipedia.org/wiki/Circle_packing#Unequal_circles - If the radius ratio is above 0.742, cannot pack better than uniformly sized discs. 
+        // radius ratio would just be r1/r2  
