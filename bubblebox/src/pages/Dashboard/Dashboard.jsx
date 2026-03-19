@@ -15,6 +15,7 @@ function Dashboard() {
   const [isOpen, setOpen] = useState(false);
   const [taskList, setTaskList] = useState([]);
   const [activeTaskID, setActiveTaskID] = useState(null)
+  const [isFull, setIsFull] = useState(false);
   
   const [loaded, setLoaded] = useState(false);
   const [userID, setUserID] = useState(null)
@@ -72,8 +73,8 @@ function Dashboard() {
   return (
     <div className="Home">
       <PersistentDrawer onActiveList={setActiveListID} onChangeTask={setActiveTaskID} isOpen={isOpen} onOpenChange={setOpen} listNames={listNames}/>
-      {userID != null && <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen} listNames={listNames} userID={userID} activeListID={activeListID} activeTaskID={activeTaskID}/> }{/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
-    {taskList.length > 0 && <BoxCanvas taskList={taskList} isOpen={isOpen} onOpenChange={setOpen} onTaskSelect={getTaskID} />} {/*https://stackoverflow.com/a/72395897/*/} {/*ensuring task list has data in it, before sent to BoxCanvas*/}
+      {userID != null && <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen} listNames={listNames} userID={userID} activeListID={activeListID} activeTaskID={activeTaskID} isFull={isFull}/> }{/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
+    {taskList.length > 0 && <BoxCanvas taskList={taskList} isOpen={isOpen} onOpenChange={setOpen} onTaskSelect={getTaskID} setIsFull={setIsFull} />} {/*https://stackoverflow.com/a/72395897/*/} {/*ensuring task list has data in it, before sent to BoxCanvas*/}
     </div> //https://stackoverflow.com/a/60454055
   );
 

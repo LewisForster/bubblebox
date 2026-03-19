@@ -24,7 +24,7 @@ import { FormControlLabel, MenuItem } from "@mui/material";
 import * as dayjs from 'dayjs'
 
 
-export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID}) {
+export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID, isFull}) {
 
   const [customReminder, setCustomReminder] = React.useState(false)
 
@@ -154,7 +154,7 @@ React.useEffect(()=>{
     const url = 'http://localhost:4000/tasks/saveTask'
 
     const res = await axios.post(url, values);
-
+    if (!isFull){
     switch (res.status){
       case 200:
         console.log('success!');
@@ -165,7 +165,9 @@ React.useEffect(()=>{
         console.log('error!')
         break;
     }
-
+  } else {
+    console.log("Box full!")
+  }
   }
 
 

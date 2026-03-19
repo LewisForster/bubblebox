@@ -9,22 +9,17 @@ import "./taskCSS/boxCanvas.css"
 
 
 
-function TaskComponent(item, width, height,boxRef,){
+function TaskComponent(item, width, height,boxRef,added){
 
     const posx = (Math.random()*width)-item.task_size
     const posy = (Math.random()*height)-item.task_size
     const taskName = item.task_name
     const e1 = document.createElement("div")
     e1.style.position = 'absolute'
-    let added = false;
 
 
 
-    if (!added){
-        e1.textContent = taskName
-        boxRef.current.appendChild(e1)
-        added = true
-    }
+    
 
     const item1 = {
         x: posx,
@@ -32,6 +27,7 @@ function TaskComponent(item, width, height,boxRef,){
         taskName: taskName,
         body: Matter.Bodies.circle(posx,posy,item.task_size/(height/1200),  {label: item.task_id, frictionAir:0.05, friction:0.1, restitution:0.5, inertia:Infinity, density: 1, render:{fillStyle:item.task_colour, text:{content:"Test",color:"blue",size:16,family:"Papyrus"}}}),
         element: e1, //  my screen height is read as 1045.6 by the app - divided by random numbers, /1200 looks on on my screen, havent tested on other heights. 
+        added:false,
         render(){
             const x = this.body.position.x
             const y = this.body.position.y
