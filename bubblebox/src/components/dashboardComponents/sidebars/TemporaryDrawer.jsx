@@ -154,7 +154,8 @@ React.useEffect(()=>{
     const url = 'http://localhost:4000/tasks/saveTask'
 
     const res = await axios.post(url, values);
-    if (!isFull){
+    if (values.task_id){
+      if(isFull){
     switch (res.status){
       case 200:
         console.log('success!');
@@ -165,9 +166,11 @@ React.useEffect(()=>{
         console.log('error!')
         break;
     }
-  } else {
-    console.log("Box full!")
   }
+  }else{
+    if(isFull){
+      alert("Box full!");
+  }}
   }
 
 
@@ -313,7 +316,8 @@ React.useEffect(()=>{
               id="dateTimePicker"
               selected={customReminder}
               onChange={handleReminderChange}
-              maxDateTime={dayjs(values.taskDue)}
+              minDateTime={dayjs()}
+              maxDateTime={dayjs(values.taskDue).add(5,'minute')}
               format="DD/MM/YYYY hh:mm A"
               value={dayjs(values.taskReminder)}
               sx={{'& .MuiFormLabel-root': {color:'black'},'& .MuiButtonBase-root': {color:"black"}, '& .MuiPickersOutlinedInput-notchedOutline': {borderColor:"black"}}} //https://mui.com/material-ui/customization/how-to-customize/#overriding-nested-component-styles
