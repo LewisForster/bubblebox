@@ -7,7 +7,8 @@ import { isCircleInPolygon } from '@/components/misc/circlePacking';
 
 
 
-const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect, setIsFull}) => {
+
+const BoxCanvas = ({taskList, activeListID, onTaskSelect, fullLists}) => {
   const [windowWidth, windowHeight] = useWindowSize()
   const width = windowWidth / 1.15;
   const height = windowHeight / 1.25
@@ -87,7 +88,7 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect, setIsFull}) =>
   }
   let added = 0;
   let failed = 0;
-  let isFull = 
+  let isFull = false;
   taskBodies.forEach((taskItem) =>{
     let placed = false
     let overlapcount = 0;
@@ -101,8 +102,7 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect, setIsFull}) =>
       const randomy = (Math.random()*height)-radius
       console.log(randomx,randomy)
 
-      let a = isCircleInPolygon(xPolygon, yPolygon, randomx, randomy, radius);
-      if (a){
+      if (isCircleInPolygon(xPolygon, yPolygon, randomx, randomy, radius)){
         let overlap = false
         for (const b of allbodies){
           if (b.isStatic){
@@ -142,25 +142,26 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect, setIsFull}) =>
         console.log("failed to place, trying again")
         count++
       }
-    }
-    if (!a){
+    }else{
       console.log("Circle not in polygon, retrying")
       count++
-    }
-  else{
+    }}
+    if (count >= 10000){
     console.log("failed to place item after 100 tries, moving on")
     count++
     failed++
     isBoxFull = true;
-    setIsFull(true);
     console.log("isFull:", isBoxFull)
-
-    continue;
 
   }
     
+  if (failed <= 0){
+    isBoxFull = false;
+    console.log("isFull:", isBoxFull)
+  }
     
   console.log("no failed:", failed)
+  console.log("isboxfull", isBoxFull)
     
  // Won't accept taskBodies as a nested array -> can only add item looping over the taskbodies array
     
@@ -168,7 +169,18 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect, setIsFull}) =>
 
     console.log("hi") 
 
-}})
+})
+
+  if (isBoxFull){
+    fullLists.current = [...new Set([...fullLists.current, activeListID])] // adding full list to array of full lists - https://stackoverflow.com/a/64294073
+    console.log("added to full lists", activeListID)
+    console.log("FULL LISTS CURRENT:", fullLists.current)
+  } else{
+    fullLists.current = fullLists.current.filter(id => id !== activeListID) // if not full, ensuring list is not in full lists array
+    console.log("removed from full lists", activeListID)
+    console.log("FULL LISTS CURRENT:", fullLists.current)
+  }
+  
 
 
 

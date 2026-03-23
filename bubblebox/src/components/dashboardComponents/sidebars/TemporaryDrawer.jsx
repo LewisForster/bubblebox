@@ -24,12 +24,13 @@ import { FormControlLabel, MenuItem } from "@mui/material";
 import * as dayjs from 'dayjs'
 
 
-export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID, isFull}) {
+export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID, fullLists}) {
 
   const [customReminder, setCustomReminder] = React.useState(false)
 
   const [reminderTrue, setReminderTrue] = React.useState(false)
   const [selectedDateTime, setSelectedDateTime] = React.useState(dayjs())
+  const prevSize = React.useRef(null) // again using ref to prevent rerender
 
   const handleCheckChange = (event) => {
 
@@ -83,6 +84,7 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
         userRemEmail:selectedTask.user_reminder_emailed,
         dueRemEmail:selectedTask.due_reminder_emailed
       })
+      prevSize.current = selectedTask.task_size
 
     } else{
       setValues({
@@ -96,7 +98,9 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
     taskReminder:dayjs(),
     taskDue:dayjs(),
     userRemEmail:0,
-    dueRemEmail:0})
+    dueRemEmail:0
+  })
+    prevSize.current=0 // setting to 0, avoiding null errors
     }
   }
 
@@ -108,7 +112,21 @@ React.useEffect(()=>{
 
   const handleSizeChange = (e) =>{
     const value = e.target.value;
-    setValues({...values, taskSize:value}) //reused from login, changed for specifically range input
+
+
+    if (values.task_id && fullLists.current.includes(values.list_id)){
+
+      console.log("NEW VALUE:", value, "PREV SIZE:", prevSize.current)
+      if (prevSize.current < value){  // if list is full, alert
+        alert("Box full!");
+        return;
+      } else {
+         setValues({...values, taskSize:value})
+      }
+    } else{
+      setValues({...values, taskSize:value})
+    }
+    //reused from login, changed for specifically range input
   }
   
 
@@ -153,24 +171,26 @@ React.useEffect(()=>{
 
     const url = 'http://localhost:4000/tasks/saveTask'
 
+
+    if (!values.task_id && fullLists.current.includes(values.list_id)){
+      if (prevSize.current < values.taskSize){  // if list is full, alert
+        alert("Box full!");
+        return;
+      }
+    }
+
+
     const res = await axios.post(url, values);
-    if (values.task_id){
-      if(isFull){
     switch (res.status){
       case 200:
         console.log('success!');
         console.log(values)
-        window.location.reload(false);
+        window.location.reload(true) // reload page to update task info - can change to just update the task list in state, but this is easier for now - will update later;
       break;
       case 500:
         console.log('error!')
         break;
     }
-  }
-  }else{
-    if(isFull){
-      alert("Box full!");
-  }}
   }
 
 
