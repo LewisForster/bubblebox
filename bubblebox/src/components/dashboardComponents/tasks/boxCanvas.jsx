@@ -2,20 +2,24 @@ import { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import TaskComponent from "./taskComponent";
 import Matter from 'matter-js';
 import "./taskCSS/boxCanvas.css"
+import { isCircleInPolygon } from '@/components/misc/circlePacking';
 
 
 
 
-const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
+
+const BoxCanvas = ({taskList, activeListID, onTaskSelect, fullLists}) => {
   const [windowWidth, windowHeight] = useWindowSize()
   const width = windowWidth / 1.15;
   const height = windowHeight / 1.25
+  let isBoxFull = false;
   
 
  const engineRef = useRef(null);
  const boxRef = useRef(null);
  const stepRef=useRef(null);
  const stepRef2 = useRef(null);
+ const maxDensity = 0.73 // have not got this working, 0.73 was the densest, working number I got.
 
 
 
@@ -29,7 +33,8 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
     let MouseConstraint = Matter.MouseConstraint;
     let Mouse = Matter.Mouse;
     let Composite = Matter.Composite;
-    let Events = Matter.Events
+    let Events = Matter.Events;
+    let circleAreaTotal = 0
 
     engineRef.current = Engine.create({gravity: {y:0}});
 
@@ -53,16 +58,25 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
 
     const width = render.options.width
     const height = render.options.height; // https://www.youtube.com/watch?v=dbPixrR9mSw - Given up on trying to get resizing to work for now
+    const area = width*height
+    console.log("W:","H:", width, height)
 
     
 
     
-    const wall1 = Bodies.rectangle((width/2),0,width,50,{isStatic:true}) // roof
-    const floor = Bodies.rectangle((width/2),height,width,50,{isStatic:true}) // floor 
-    const wall3 = Bodies.rectangle((width),(height/2),50,height,{isStatic:true}) //right wall
-    const wall4 = Bodies.rectangle(0,(height/2),50,height,{isStatic:true}) //l wall
+    const wall1 = Bodies.rectangle((width/2),0,width,50,{isStatic:true}) // roof - x,y,w,h(thickness)
+    const floor = Bodies.rectangle((width/2),height,width,50,{isStatic:true}) // floor - x,y,w,h(thickness)
+    const wall3 = Bodies.rectangle((width),(height/2),50,height,{isStatic:true}) //right wall - x,y,w(thickness),h
+    const wall4 = Bodies.rectangle(0,(height/2),50,height,{isStatic:true}) //l wall - x,y,w(thickness),h
 
+    const xPolygon = [wall4.bounds.max.x, wall3.bounds.min.x,wall3.bounds.min.x, wall4.bounds.max.x,]
+    const yPolygon = [wall1.bounds.max.y, wall1.bounds.max.y, floor.bounds.min.y, height*2,]
 
+    // const testwall1 = Bodies.rectangle(wall4.bounds.max.x, wall3.bounds.max.x, wall3.bounds.max.x, wall4.bounds.max.x, {isStatic:true, render:{fillStyle:'blue'}})
+    // const testwall2 = Bodies.rectangle(wall1.bounds.min.y, wall1.bounds.min.y,floor.bounds.max.x * 2, height*2, {isStatic:true, render:{fillStyle:'red'}})
+    
+    console.log("XPOLY:", xPolygon)
+    console.log("YPOLY:", yPolygon)
     
     const taskBodies = taskList.map(item=>
       TaskComponent(item, width,height,boxRef))
@@ -70,20 +84,103 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
       console.log("tASKBODIES", taskBodies)
 
   if (engineRef && engineRef.current.world){
-  Matter.Composite.add(engineRef.current.world,[wall1,floor,wall3,wall4]); 
+  Matter.Composite.add(engineRef.current.world,[ wall1,floor,wall3,wall4,]); 
   }
-
+  let added = 0;
+  let failed = 0;
+  let isFull = false;
   taskBodies.forEach((taskItem) =>{
+    let placed = false
+    let overlapcount = 0;
+    const radius = taskItem.body.circleRadius
+
+    let count = 0;
+    const allbodies = engineRef.current.world.bodies
+
+    while (!placed && count < 10000){ 
+      const randomx = (Math.random()*width)-radius
+      const randomy = (Math.random()*height)-radius
+      console.log(randomx,randomy)
+
+      if (isCircleInPolygon(xPolygon, yPolygon, randomx, randomy, radius)){
+        let overlap = false
+        for (const b of allbodies){
+          if (b.isStatic){
+            continue;
+          } // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for...of
+          const dx = b.position.x - randomx
+          const dy = b.position.y - randomy
+          const distance = Math.sqrt(dx*dx + dy*dy)
+          const radii = (b.circleRadius) + radius
+          console.log("B CIRCLE RADIUS:", b.circleRadius)
+
+          if (distance <= radii-100) { // allowing overlap of 100px
+            overlap = true; 
+            overlapcount++
+            console.log("overlap")
+            count++
+            break;
+          }
+          
+        }
+        if (!overlap) {
+          console.log("success!")
+          Matter.Composite.add(engineRef.current.world, taskItem.body)
+        Matter.Body.setPosition(taskItem.body,{x:randomx,y:randomy})
+        placed = true
+        added ++
+        console.log("added", added)
+
+        if (!taskItem.added) {
+          taskItem.element.textContent = taskItem.taskName
+          boxRef.current.appendChild(taskItem.element)
+          added = true
+        }
 
 
-    Matter.Composite.add(engineRef.current.world, taskItem.body) // Won't accept taskBodies as a nested array -> can only add item looping over the taskbodies array
-    console.log(taskItem)
+      } else {
+        console.log("failed to place, trying again")
+        count++
+      }
+    }else{
+      console.log("Circle not in polygon, retrying")
+      count++
+    }}
+    if (count >= 10000){
+    console.log("failed to place item after 100 tries, moving on")
+    count++
+    failed++
+    isBoxFull = true;
+    console.log("isFull:", isBoxFull)
 
+  }
+    
+  if (failed <= 0){
+    isBoxFull = false;
+    console.log("isFull:", isBoxFull)
+  }
+    
+  console.log("no failed:", failed)
+  console.log("isboxfull", isBoxFull)
+    
+ // Won't accept taskBodies as a nested array -> can only add item looping over the taskbodies array
+    
 
 
     console.log("hi") 
 
 })
+
+  if (isBoxFull){
+    fullLists.current = [...new Set([...fullLists.current, activeListID])] // adding full list to array of full lists - https://stackoverflow.com/a/64294073
+    console.log("added to full lists", activeListID)
+    console.log("FULL LISTS CURRENT:", fullLists.current)
+  } else{
+    fullLists.current = fullLists.current.filter(id => id !== activeListID) // if not full, ensuring list is not in full lists array
+    console.log("removed from full lists", activeListID)
+    console.log("FULL LISTS CURRENT:", fullLists.current)
+  }
+  
 
 
 
@@ -94,11 +191,17 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
   const subSteps = 3;
   const subDelta = delta / subSteps;
 
+  
+
   (function run() {
     stepRef.current = window.requestAnimationFrame(run);
     for (let i = 0; i < subSteps; i += 1) {
       Engine.update(engineRef.current, subDelta);
     }
+
+
+    
+
     taskBodies.forEach(taskItem => {
 
       if ((taskItem.body.position.x - taskItem.body.circleRadius) <0 // cannot go past left wall - x cannot be less than 0
@@ -106,7 +209,7 @@ const BoxCanvas = ({taskList, isOpen, onOpenChange, onTaskSelect}) => {
     || (taskItem.body.position.x+taskItem.body.circleRadius) > width // cannot go past width - x cannot be greater than screenwidth
     || (taskItem.body.position.y+taskItem.body.circleRadius) > height){ // cannot go past height - y cannot be greater than screenheight
         Matter.Body.setPosition(taskItem.body,{x:width/2,y:height/2})
-        console.log("HELLOOOOOOO")
+        console.log("HELLOOOOOOO") // https://www.tylerxhobbs.com/words/a-randomized-approach-to-circle-packing
       } 
       taskItem.render()}); // calling the render function for each taskItem - tracking where the text is - keeping it centred on the bubble
   })(); // this is the only code that has worked to stop things going through walls
@@ -261,3 +364,11 @@ function useWindowSize(){
 
 
 export default BoxCanvas;
+
+// idea for box fullness:
+  // (area of box) - (sum of all current circles) 
+    // (W * H) - sum(pir^2)
+
+      // https://en.wikipedia.org/wiki/Sphere_packing#Irregular_packing - Irregular packing has a density of 64%, but this is also spheres, not circles.
+      // https://en.wikipedia.org/wiki/Circle_packing#Unequal_circles - If the radius ratio is above 0.742, cannot pack better than uniformly sized discs. 
+        // radius ratio would just be r1/r2  

@@ -12,6 +12,14 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Select from '@mui/material/Select';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+import ListItemText from '@mui/material/ListItemText';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import Chip from '@mui/material/Chip';
+
 
 
 
@@ -22,14 +30,20 @@ import axios from "axios";
 import colourGen from "../../misc/colourGen.jsx";
 import { FormControlLabel, MenuItem } from "@mui/material";
 import * as dayjs from 'dayjs'
+import { NearMeSharp } from "@mui/icons-material";
 
 
-export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID}) {
+export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, activeListID, userID, activeTaskID, fullLists}) {
 
   const [customReminder, setCustomReminder] = React.useState(false)
+  const [listTags, setListTags] = React.useState([])
+  const [taskTags, setTaskTags] = React.useState([])
 
   const [reminderTrue, setReminderTrue] = React.useState(false)
   const [selectedDateTime, setSelectedDateTime] = React.useState(dayjs())
+  const prevSize = React.useRef(null) // again using ref to prevent rerender
+
+
 
   const handleCheckChange = (event) => {
 
@@ -58,18 +72,34 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
     taskDue:dayjs(),
     userRemEmail:0,
     dueRemEmail:0,
+    tags:[]
     
 
   }); // reused logic from the login 
 
 
+
   const fetchData = async (del = null,) =>{
     const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID,}})
+    const taskRes  = await axios.get('http://localhost:4000/auth/tags', {params: {user_id: userID}})
     const selectedTask = (res.data.find(item=>item.task_id == activeTaskID))
+
+    setListTags(taskRes.data)
+    console.log("TASK DATA:", taskRes.data)
+
+
+
   
 
 
     if (selectedTask){
+      let taskTagArray = [] 
+
+      if (selectedTask.tag_id == null){ // have to check the task has tags.
+        taskTagArray = []
+      } else{
+       taskTagArray = selectedTask.tag_id.split(',') // splitting strring from db response
+      }
       setValues({
         task_id:activeTaskID,
         list_id:activeListID,
@@ -81,8 +111,10 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
         taskReminder:selectedTask.taskReminder,
         taskDue:selectedTask.task_due,
         userRemEmail:selectedTask.user_reminder_emailed,
-        dueRemEmail:selectedTask.due_reminder_emailed
+        dueRemEmail:selectedTask.due_reminder_emailed,
+        tags:taskTagArray
       })
+      prevSize.current = selectedTask.task_size
 
     } else{
       setValues({
@@ -96,11 +128,19 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
     taskReminder:dayjs(),
     taskDue:dayjs(),
     userRemEmail:0,
-    dueRemEmail:0})
+    dueRemEmail:0,
+    tags: []
+  })
+    prevSize.current=0 // setting to 0, avoiding null errors
     }
   }
 
 
+// const handleTagChange = (e) =>{
+//   const value = e.target.value;
+
+//   setValues({...values, tags:})
+// }
   
 React.useEffect(()=>{
   fetchData()
@@ -108,7 +148,21 @@ React.useEffect(()=>{
 
   const handleSizeChange = (e) =>{
     const value = e.target.value;
-    setValues({...values, taskSize:value}) //reused from login, changed for specifically range input
+
+
+    if (values.task_id && fullLists.current.includes(values.list_id)){
+
+      console.log("NEW VALUE:", value, "PREV SIZE:", prevSize.current)
+      if (prevSize.current < value){  // if list is full, alert
+        alert("Box full!");
+        return;
+      } else {
+         setValues({...values, taskSize:value})
+      }
+    } else{
+      setValues({...values, taskSize:value})
+    }
+    //reused from login, changed for specifically range input
   }
   
 
@@ -153,19 +207,26 @@ React.useEffect(()=>{
 
     const url = 'http://localhost:4000/tasks/saveTask'
 
-    const res = await axios.post(url, values);
 
+    if (!values.task_id && fullLists.current.includes(values.list_id)){
+      if (prevSize.current < values.taskSize){  // if list is full, alert
+        alert("Box full!");
+        return;
+      }
+    }
+
+
+    const res = await axios.post(url, values);
     switch (res.status){
       case 200:
         console.log('success!');
         console.log(values)
-        window.location.reload(false);
+        window.location.reload(true) // reload page to update task info - can change to just update the task list in state, but this is easier for now - will update later;
       break;
       case 500:
         console.log('error!')
         break;
     }
-
   }
 
 
@@ -230,7 +291,6 @@ React.useEffect(()=>{
             <div className="selectArea">
               <label htmlFor="boxSelect">Box:</label>
               <Form.Select aria-label="boxSelect" onChange={handleChange} name="list_id" value={values.list_id}>
-                <option value="placeholder">Select a Box</option>
                 {listNames.map((item) => (
                   <option key={item.list_id} value={item.list_id} >
                     {item.list_name} 
@@ -281,21 +341,28 @@ React.useEffect(()=>{
             </div>
           </ListItem>
           <ListItem>
-            <div className="calendarArea">
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateTimePicker label="Due:" 
-              id="dateTimePicker"
-              selected={selectedDateTime}
-              onChange={handleDateChange}
-              format="DD/MM/YYYY hh:mm A"
-              minDateTime={dayjs()}
-              value={dayjs(values.taskDue)}
-              sx={{'& .MuiFormLabel-root': {color:'black'},'& .MuiButtonBase-root': {color:"black"}, '& .MuiPickersOutlinedInput-notchedOutline': {borderColor:"black"}}} //https://mui.com/material-ui/customization/how-to-customize/#overriding-nested-component-styles
-            /> 
-            </LocalizationProvider>
-            
-            </div>
-          </ListItem>
+            <label htmlFor="tagSelect">Tags:</label>
+            <Select 
+            sx={{width:'100%'}}
+            displayEmpty
+            aria-label="tagSelect" multiple value={values.tags || []} onChange={(e) => setValues({...values, tags:e.target.value})} input={<OutlinedInput placeholder="tags" label="Tags"/>} renderValue={(selected)=>{
+              if (selected.length == 0) return <em>Tags</em>;
+              return(
+              <Box sx={{display:'flex', flexWrap:'wrap'}}>
+                {selected.map((id)=>{
+                  const tagObj = listTags.find(t => t.tag_id == id);
+                  return <Chip key={id} label={tagObj.tag_name}/>
+                })}
+              </Box>
+            )}} // https://mui.com/material-ui/react-select/#placeholder
+            > {/*https://mui.com/material-ui/react-select/#chip  */}
+              {listTags.map((tag)=>(
+                <MenuItem key={tag.tag_id} value={tag.tag_id}>
+                {tag.tag_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </ListItem> 
           <ListItem>
             <div className="">
               <FormControlLabel control={<Checkbox checked={!(!!values.userRemEmail)} onClick={handleCheckChange}/>}  label="Reminder?"/>
@@ -311,7 +378,8 @@ React.useEffect(()=>{
               id="dateTimePicker"
               selected={customReminder}
               onChange={handleReminderChange}
-              maxDateTime={dayjs(values.taskDue)}
+              minDateTime={dayjs()}
+              maxDateTime={dayjs(values.taskDue).add(5,'minute')}
               format="DD/MM/YYYY hh:mm A"
               value={dayjs(values.taskReminder)}
               sx={{'& .MuiFormLabel-root': {color:'black'},'& .MuiButtonBase-root': {color:"black"}, '& .MuiPickersOutlinedInput-notchedOutline': {borderColor:"black"}}} //https://mui.com/material-ui/customization/how-to-customize/#overriding-nested-component-styles
