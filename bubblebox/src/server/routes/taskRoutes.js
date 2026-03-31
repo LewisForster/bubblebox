@@ -8,8 +8,32 @@ const router = express.Router();
 
 router.post("/saveTask", (req, res) => {
     db_con.beginTransaction(err => {
-        const { list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue, userRemEmail, dueRemEmail, task_id, } = req.body;
+        const { list_id, taskName, taskDescription, taskSize, taskPriority, taskColour, taskReminder, taskDue, userRemEmail, dueRemEmail, task_id, tags } = req.body;
 
+        function syncTags(task_id, tagList, res) {
+            db_con.query('DELETE FROM tagsjoin WHERE task_id = ?', [task_id], (err) => {
+                if (err) {
+                    console.log("err")
+                    return db_con.rollback(() => {
+                        res.status(500).send("Error updating tags")
+                    })
+                }
+            }) // deleting duplicates
+            const tagValues = tags.map(tag_id => [task_id, tag_id]);
+            db_con.query('INSERT INTO tagsjoin (task_id, tag_id) VALUES ?', [tagValues], (err) => {
+                if (err) {
+                    console.log("SAVE TAG ERR", err)
+                    return db_con.rollback(() => {
+                        res.status(500).send("Error updating tags")
+                    })
+                } else {
+                    return db_con.commit(() => {
+                        console.log("SAVING TAGS")
+                        res.status(200).json({ saved: true, task_id })
+                    })
+                }
+            })
+        }
         if (task_id) {
             const query = `UPDATE tasks SET list_ID = ?, task_name = ?, task_description = ?, task_size = ?, task_priority = ?, task_colour = ?, task_reminder = ?, task_due = ?, user_reminder_emailed = ?, due_reminder_emailed = ?
               WHERE task_id = ? `
@@ -19,10 +43,8 @@ router.post("/saveTask", (req, res) => {
                         res.status(500).send("Error updating task!")
                     })
                 } else {
-                    return db_con.commit(() => {
-                        console.log("SUPER TASK UPDATE RUNNING CODE")
-                        res.status(200).json({ updated: true })
-                    })
+                    console.log("UPDATING TASKS")
+                    syncTags(task_id, tags, res)
                 }
             })
         } else {
@@ -37,9 +59,7 @@ router.post("/saveTask", (req, res) => {
                 } else {
                     console.log("adding into DB")
                     console.log(result)
-                    return db_con.commit(() => {
-                        res.status(200).json({ created: true, taskId: result.insertId })
-                    })
+                    syncTags(task_id, tags, res)
                 }
             })
         }
@@ -75,12 +95,19 @@ router.post("/deleteTask", (req, res) => {
 
 router.get("/taskInfo", (req, res) => {
     const { list_id, } = req.query;
-    const query = `SELECT task_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due, user_reminder_emailed, due_reminder_emailed FROM tasks
-     INNER JOIN tasklist 
-     ON tasks.list_id=tasklist.list_id
-     INNER JOIN users
-     ON tasklist.user_id=users.id
-     WHERE tasks.list_id = ? AND tasklist.user_id = ?`;
+    const query = `SELECT tasks.task_id, task_name, task_description, task_size, task_priority, task_colour, task_reminder, task_due, user_reminder_emailed, due_reminder_emailed,
+     GROUP_CONCAT(tags.tag_id) AS "tag_id",
+     GROUP_CONCAT(tags.tag_name) AS "tag_name" 
+     FROM tasks
+     INNER JOIN tasklist ON tasks.list_id=tasklist.list_id
+     INNER JOIN users ON tasklist.user_id=users.id
+     LEFT JOIN tagsjoin ON tasks.task_id = tagsjoin.task_id
+     LEFT JOIN tags ON tagsjoin.tag_id = tags.tag_id
+     WHERE tasks.list_id = ? AND tasklist.user_id = ?
+     GROUP BY tasks.task_id`;
+    // https://www.reddit.com/r/SQL/comments/1bn9xhl/comment/kwhhgmj/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+    // https://www.reddit.com/r/SQL/comments/1bn9xhl/comment/kwh9a7p/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+    // https://www.geeksforgeeks.org/sql/mysql-group_concat-function/
     db_con.query(query, [list_id, req.user.id], (err, result) => {
         if (err) {
             console.log("DIDNT FETCH TASK INFO")

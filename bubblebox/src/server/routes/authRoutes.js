@@ -138,8 +138,62 @@ router.post('/logout', (req, res, next) => {
     })
 })
 
+router.get('/tags/', (req, res) => {
+    const { user_id } = req.query;
+    const query = 'SELECT * FROM tags WHERE user_id = ?';
+    console.log("userID:", user_id)
+    db_con.query(query, [user_id], (err, result) => {
+        if (err) {
+            console.log("error retreiving tags:", err)
+            return res.status(500).send(err);
+        }
+        res.status(200).json(result);
+        console.log("tags:", result);
+    });
+});
 
+router.post('/createTag', (req, res) => {
+    const { tag_name, user_id } = req.body;
+    const query = 'INSERT INTO tags (tag_name, user_id) VALUES (?, ?)';
+    db_con.query(query, [tag_name, user_id], (err, result) => {
+        if (err) {
+            console.log("error creating tag:", err)
+            return res.status(500).send(err);
+        } else {
+            console.log("tag created:", result);
+            return res.status(201).json({ created: true, tagId: result.insertId })
+        }
+    });
+})
 
+router.post('/updateTag', (req, res) => {
+    const { tag_id, tag_name, user_id } = req.body;
+    const query = 'UPDATE tags SET tag_name = ? WHERE tag_id = ? AND user_id = ?';
+    db_con.query(query, [tag_name, tag_id, user_id], (err, result) => {
+        if (err) {
+            console.log("error updating tag:", err)
+            return res.status(500).send(err);
+        } else {
+            console.log("DB updated:", result)
+            return res.status(200).json({ updated: true })
+        }
+    });
+});
+
+router.post('/deleteTag', (req, res) => {
+    const { tag_id, user_id } = req.body.params;
+    console.log("TAG ID:", tag_id, "USER ID:", user_id)
+    const query = 'DELETE FROM tags WHERE tag_id = ? AND user_id = ?';
+    db_con.query(query, [tag_id, user_id], (err, result) => {
+        if (err) {
+            console.log("error deleting tag:", err)
+            return res.status(500).send(err);
+        } else {
+            console.log("Tag deleted:", result)
+            return res.status(200).json({ deleted: true })
+        }
+    });
+});
 
 router.get("/auth", (req, res) => {
     if (req.user) {

@@ -102,7 +102,7 @@ function Dashboard() {
 
   return (
     <div className="Home">
-      <PersistentDrawer onActiveList={setActiveListID} onChangeTask={setActiveTaskID} isOpen={isOpen} onOpenChange={setOpen} listNames={listNames}/>
+      <PersistentDrawer onActiveList={setActiveListID} onChangeTask={setActiveTaskID} isOpen={isOpen} onOpenChange={setOpen} listNames={listNames} userID={userID} />
       {userID != null && <TemporaryDrawer isOpen={isOpen} onOpenChange={setOpen} listNames={listNames} userID={userID} activeListID={activeListID} activeTaskID={activeTaskID} fullLists={fullLists}/> }{/*used to open temporary drawer (right sidebar) from persistent drawer (left sidebar)*/}
       <Filter filters={filters} onChange={setFilters} listNames={listNames}></Filter>
     {taskList.length > 0 && <BoxCanvas taskList={filteredTaskList} activeListID={activeListID} onTaskSelect={getTaskID} fullLists={fullLists} />} {/*https://stackoverflow.com/a/72395897/*/} {/*ensuring task list has data in it, before sent to BoxCanvas*/}

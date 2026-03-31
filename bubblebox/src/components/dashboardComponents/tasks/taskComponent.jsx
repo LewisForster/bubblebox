@@ -5,6 +5,7 @@ import Matter from 'matter-js';
 import { useLayoutEffect, useState } from 'react';
 import { render } from 'ejs';
 import "./taskCSS/boxCanvas.css"
+import { ThumbUpSharp } from '@mui/icons-material';
 
 
 
@@ -16,7 +17,10 @@ function TaskComponent(item, width, height,boxRef,added){
     const taskName = item.task_name
     const e1 = document.createElement("div")
     e1.style.position = 'absolute'
+    
 
+
+    
 
 
     
@@ -33,7 +37,8 @@ function TaskComponent(item, width, height,boxRef,added){
             const y = this.body.position.y
 
             this.element.style.top = `${y-10}px`
-            this.element.style.left = `${x-15}px`
+            this.element.style.left = `${x-15}px` // attempt at centering text
+            this.element.style.fontSize = `${Math.sqrt(item.task_size)*2}px` // attempt to scale text based on size of task - looks ok for now.
             
 
         

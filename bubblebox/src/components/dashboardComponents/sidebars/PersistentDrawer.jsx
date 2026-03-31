@@ -29,6 +29,10 @@ import Row from 'react-bootstrap/Row';
 import { useNavigate } from "react-router-dom";
 import sleep from "../../misc/sleep.jsx";
 import axios from "axios";
+import Button from "react-bootstrap/Button";
+import { DataGrid }  from '@mui/x-data-grid';
+import DeleteIcon from "@mui/icons-material/Delete";
+
 
 
 
@@ -93,7 +97,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   justifyContent: 'flex-end',
 }));
 
-export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask, onActiveList, listNames}) {
+export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask, onActiveList, listNames, userID}) {
   const navigate = useNavigate();  
     
     const handleLogout = async() =>{
@@ -105,6 +109,8 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask
 
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
+
+  const [activeTab, setActiveTab] = React.useState("first");
 
   
 
@@ -129,7 +135,10 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask
   
   const [modalShow, setModalShow] = React.useState(false);
 
-  const handleModalClose = () => setModalShow(false);
+  const handleModalClose = () => {
+    setModalShow(false);
+    setActiveTab("first");
+  };
   const handleModalShow = () => setModalShow(true);
 
   const handleDrawerOpen = () => {
@@ -150,6 +159,109 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask
   //   console.log(item.list_id);
   //   return item.list_id
   // }
+
+
+  
+
+
+
+
+
+  // DATA GRID
+
+  const [rowModesModel, setRowModesModel] = React.useState({});
+
+  const handleRowUpdate = async(newRow, oldRow) => {
+    try{
+      const res = await axios.post("http://localhost:4000/auth/updateTag", {tag_id: newRow.tag_id, tag_name: newRow.tag_name, user_id: userID})
+
+      console.log("DB updated:", res.data)
+      fetchTags();
+
+      return newRow;
+    } catch (err) {
+    console.log("Error updating tag:", err)
+    return oldRow; //rollback
+  }
+}
+
+  const [rows, setRows] = React.useState([]);
+  const [filterModel, setFilterModel] = React.useState({ items: [] });
+  const [sortModel, setSortModel] = React.useState([]);
+  const [displayDataGrid, setDisplayDataGrid] = React.useState(false);
+
+
+    const fetchTags = async() => {
+      console.log("RUNNING FETCH TAGS")
+      try{
+        console.log("USER ID IN FETCH TAGS:", userID)
+        const res  = await axios.get('http://localhost:4000/auth/tags', {params: {user_id: userID}})
+        console.log("USER ID:", userID)
+        setRows(res.data)
+        console.log("rows:", res.data);
+        console.log("tags:", res.data);
+      }catch (err) {
+        console.log("failed to fetch tags:", err)
+      }
+    }
+
+const onbuttonClickDelete = async(row) => {
+
+  try{
+    console.log("deleting tag with id:", row.tag_id)
+    const res = await axios.post("http://localhost:4000/auth/deleteTag", { params: {tag_id: row.tag_id, user_id: userID}})
+    console.log("tag deleted:", res.data)
+    setRows((prevRows) => prevRows.filter((r) => r.tag_id !== row.tag_id)) // filtering from previous rows to show user instant deletion
+    fetchTags();
+  } catch (err) {
+    console.log("Error deleting tag:", err)
+  }
+}
+
+const addNewRow = async() => {
+  try {
+    const res = await axios.post("http://localhost:4000/auth/createTag", {tag_name: "New Tag", user_id: userID})
+    const newRow = { tag_id: res.data.tagId, tag_name: "New Tag" };
+    setRows((prevRows) => [...prevRows, newRow]);
+    setRowModesModel((oldModel) => ({
+      ...oldModel,
+      [res.data.tagId]: {mode: 'edit', fieldToFocus: 'tag_name'},
+    }));
+    console.log("DB updated:", res.data)
+    fetchTags(); // fetch - avoid renaming new tags to "new tag" if multiple tags were created
+  } catch (err) {
+    console.log("Error creating tag:", err)
+  }
+
+}; // https://www.reddit.com/r/learnreactjs/comments/wmpvvn/comment/ik1wjrq/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+// https://codesandbox.io/p/sandbox/crud-try-3-0htzso
+
+
+const columns = [
+  {
+    field: 'tag_name',
+    headerName: 'Name',
+    width: 150,
+    editable: true,
+  },
+  {
+    field: 'actions',
+    headerName: 'Actions',
+    type: 'actions',
+    width: 150,
+    getActions: (params) => {
+      return [
+        <IconButton onClick = {()=> onbuttonClickDelete(params.row)} color="error">
+          <DeleteIcon />
+        </IconButton>
+      ]
+    },
+  },
+
+];
+
+
+
 
   
 
@@ -256,12 +368,13 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask
 
 
       </Main>
-      <Modal dialogClassName="settingsDialog" className="settingsModal" size="lg" show={modalShow} onHide={handleModalClose}>
+      <>
+      <Modal dialogClassName="settingsDialog" className="settingsModal" size="lg" show={modalShow} onHide={handleModalClose} >
         <Modal.Header closeButton>
-          <Modal.Title>Settings</Modal.Title>
+          <Modal.Title style={{width:'100%', textAlign: 'center'}}>Settings</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Tab.Container id="left-tabs-example" defaultActiveKey="first">
+          <Tab.Container id="left-tabs-example" defaultActiveKey="first" onSelect={(e) => {setActiveTab(e); if (e==="second") {fetchTags();}}}>
       <Row>
         <Col sm={3}>
           <Nav variant="pills" className="flex-column">
@@ -275,14 +388,35 @@ export default function PersistentDrawerLeft({isOpen, onOpenChange, onChangeTask
         </Col>
         <Col sm={9}>
           <Tab.Content>
-            <Tab.Pane eventKey="first"><Nav.Link onClick={handleLogout}>Logout</Nav.Link></Tab.Pane>
-            <Tab.Pane eventKey="second">Second tab content</Tab.Pane>
+            <Tab.Pane eventKey="first"><Button onClick={handleLogout }>Logout</Button></Tab.Pane>
+            <Tab.Pane eventKey="second" style={{width:'100%', height:'100%', flexDirection:'column', textAlign:'center'}}>Edit Tags
+              <Box sx={{ height: 400, width: '100%' }}>
+      {activeTab === "second" &&( // fixing error where datagrid wouldn't render properly as modal didn't have a height. 
+         <DataGrid
+        rows={rows}
+        columns={columns}
+        editMode="row"
+        rowModesModel={rowModesModel}
+        onRowModesModelChange={(newModel) => setRowModesModel(newModel)}        
+        getRowId={(row)=> row.tag_id}
+        processRowUpdate={handleRowUpdate}
+        slots={{
+          footer:() => (<Button onClick={addNewRow}>Add New Tag</Button>
+          )
+        }}
+        disableRowSelectionOnClick
+      />)}
+    </Box>
+
+            </Tab.Pane>
           </Tab.Content>
+
         </Col>
       </Row>
     </Tab.Container>
         </Modal.Body>
       </Modal>
+      </>
     </Box>
   );
 }
