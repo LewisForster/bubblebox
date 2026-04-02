@@ -81,11 +81,11 @@ export default function AnchorTemporaryDrawer({isOpen, onOpenChange, listNames, 
 
   const fetchData = async (del = null,) =>{
     const res = await axios.get("http://localhost:4000/tasks/taskInfo", {params: {list_id: activeListID, user_id: userID,}})
-    const taskRes  = await axios.get('http://localhost:4000/auth/tags', {params: {user_id: userID}})
+    const tagRes  = await axios.get('http://localhost:4000/auth/tags', {params: {user_id: userID}})
     const selectedTask = (res.data.find(item=>item.task_id == activeTaskID))
 
-    setListTags(taskRes.data)
-    console.log("TASK DATA:", taskRes.data)
+    setListTags(tagRes.data)
+    console.log("TASK DATA:", tagRes.data)
 
 
 
